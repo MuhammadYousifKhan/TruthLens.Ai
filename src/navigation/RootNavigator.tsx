@@ -10,6 +10,7 @@ import DashboardScreen from "../screens/DashboardScreen";
 import ScanScreen from "../screens/ScanScreen";
 import AnalyzingScreen from "../screens/AnalyzingScreen";
 import ResultScreen from "../screens/ResultScreen";
+import GuideScreen from "../screens/GuideScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -56,9 +57,11 @@ export default function RootNavigator() {
               options={{ title: "Analyzing", headerBackVisible: false }}
             />
             <Stack.Screen name="Result" component={ResultScreen} options={{ title: "Result" }} />
-            <Stack.Screen name="Guide" options={{ title: "Fact-Checking Guide" }}>
-              {() => <PlaceholderScreen name="Fact-Checking Guide" />}
-            </Stack.Screen>
+            <Stack.Screen
+              name="Guide"
+              component={GuideScreen}
+              options={{ title: "Fact-Checking Guide" }}
+            />
             <Stack.Screen name="Learn" options={{ title: "Learn Hub" }}>
               {() => <PlaceholderScreen name="Learn Hub" />}
             </Stack.Screen>
