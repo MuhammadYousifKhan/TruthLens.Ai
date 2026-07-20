@@ -3,7 +3,13 @@ export type RootStackParamList = {
   Dashboard: undefined;
   Scan: undefined;
   Analyzing: { imageUri: string };
-  Result: { scanId: string };
+  Result: {
+    imageUri: string;
+    probability: number;
+    confidence: number;
+    flags: string[];
+    explanation: string;
+  };
   Guide: undefined;
   Learn: undefined;
   LessonDetail: { lessonId: string };

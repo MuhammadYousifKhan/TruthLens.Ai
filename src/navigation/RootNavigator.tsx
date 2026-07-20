@@ -7,6 +7,9 @@ import PlaceholderScreen from "../screens/PlaceholderScreen";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
+import ScanScreen from "../screens/ScanScreen";
+import AnalyzingScreen from "../screens/AnalyzingScreen";
+import ResultScreen from "../screens/ResultScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,15 +45,17 @@ export default function RootNavigator() {
               component={DashboardScreen}
               options={{ title: "TruthLens AI", headerBackVisible: false }}
             />
-            <Stack.Screen name="Scan" options={{ title: "Scan Content" }}>
-              {() => <PlaceholderScreen name="Scan" />}
-            </Stack.Screen>
-            <Stack.Screen name="Analyzing" options={{ title: "Analyzing", headerBackVisible: false }}>
-              {() => <PlaceholderScreen name="Analyzing" />}
-            </Stack.Screen>
-            <Stack.Screen name="Result" options={{ title: "Result" }}>
-              {() => <PlaceholderScreen name="Scan Result" />}
-            </Stack.Screen>
+            <Stack.Screen
+              name="Scan"
+              component={ScanScreen}
+              options={{ title: "Scan Content" }}
+            />
+            <Stack.Screen
+              name="Analyzing"
+              component={AnalyzingScreen}
+              options={{ title: "Analyzing", headerBackVisible: false }}
+            />
+            <Stack.Screen name="Result" component={ResultScreen} options={{ title: "Result" }} />
             <Stack.Screen name="Guide" options={{ title: "Fact-Checking Guide" }}>
               {() => <PlaceholderScreen name="Fact-Checking Guide" />}
             </Stack.Screen>
