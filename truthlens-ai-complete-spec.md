@@ -256,6 +256,8 @@ The spreadsheet format is fixed: it pastes directly into `quizQuestions.ts`. Thi
 ### UI style
 Blue and white palette, rounded cards (16 px radius), friendly icons (Material), generous padding, sentence-case labels. Modern and clean; designed for students.
 
+All colors, spacing, radius, and font sizes are centralized in `src/theme/theme.ts` — every screen and component imports from there rather than hardcoding values, so the palette/spacing can be changed in one place and it updates app-wide.
+
 ---
 
 ## 10. Development process (Yousif)

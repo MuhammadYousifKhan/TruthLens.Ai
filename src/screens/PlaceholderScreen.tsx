@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { colors, fontSize, spacing } from "../theme/theme";
 
 export default function PlaceholderScreen({ name }: { name: string }) {
   return (
@@ -12,19 +13,19 @@ export default function PlaceholderScreen({ name }: { name: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 20,
+    fontSize: fontSize.title,
     fontWeight: "600",
-    color: "#0b3d91",
+    color: colors.primary,
   },
   subtitle: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#6b7280",
+    marginTop: spacing.sm,
+    fontSize: fontSize.body,
+    color: colors.textMuted,
   },
 });
