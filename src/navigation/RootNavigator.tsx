@@ -13,6 +13,8 @@ import ResultScreen from "../screens/ResultScreen";
 import GuideScreen from "../screens/GuideScreen";
 import LearnHubScreen from "../screens/LearnHubScreen";
 import LessonDetailScreen from "../screens/LessonDetailScreen";
+import QuizScreen from "../screens/QuizScreen";
+import QuizResultScreen from "../screens/QuizResultScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -74,15 +76,16 @@ export default function RootNavigator() {
               component={LessonDetailScreen}
               options={{ title: "Lesson" }}
             />
-            <Stack.Screen name="Quiz" options={{ title: "Quiz", headerBackVisible: false }}>
-              {() => <PlaceholderScreen name="Quiz" />}
-            </Stack.Screen>
+            <Stack.Screen
+              name="Quiz"
+              component={QuizScreen}
+              options={{ title: "Quiz", headerBackVisible: false, gestureEnabled: false }}
+            />
             <Stack.Screen
               name="QuizResult"
-              options={{ title: "Quiz Result", headerBackVisible: false }}
-            >
-              {() => <PlaceholderScreen name="Quiz Result" />}
-            </Stack.Screen>
+              component={QuizResultScreen}
+              options={{ title: "Quiz Result", headerBackVisible: false, gestureEnabled: false }}
+            />
             <Stack.Screen name="Achievements" options={{ title: "Achievements" }}>
               {() => <PlaceholderScreen name="Achievements" />}
             </Stack.Screen>
