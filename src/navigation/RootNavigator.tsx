@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import PlaceholderScreen from "../screens/PlaceholderScreen";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
+import DashboardScreen from "../screens/DashboardScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -38,10 +39,9 @@ export default function RootNavigator() {
           <>
             <Stack.Screen
               name="Dashboard"
+              component={DashboardScreen}
               options={{ title: "TruthLens AI", headerBackVisible: false }}
-            >
-              {() => <PlaceholderScreen name="Home Dashboard" />}
-            </Stack.Screen>
+            />
             <Stack.Screen name="Scan" options={{ title: "Scan Content" }}>
               {() => <PlaceholderScreen name="Scan" />}
             </Stack.Screen>
