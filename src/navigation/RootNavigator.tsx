@@ -3,7 +3,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./types";
 import { useAuth } from "../context/AuthContext";
-import PlaceholderScreen from "../screens/PlaceholderScreen";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -16,6 +15,7 @@ import LessonDetailScreen from "../screens/LessonDetailScreen";
 import QuizScreen from "../screens/QuizScreen";
 import QuizResultScreen from "../screens/QuizResultScreen";
 import AchievementsScreen from "../screens/AchievementsScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -92,9 +92,7 @@ export default function RootNavigator() {
               component={AchievementsScreen}
               options={{ title: "Achievements" }}
             />
-            <Stack.Screen name="Profile" options={{ title: "Profile" }}>
-              {() => <PlaceholderScreen name="Profile" />}
-            </Stack.Screen>
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
           </>
         )}
       </Stack.Navigator>
