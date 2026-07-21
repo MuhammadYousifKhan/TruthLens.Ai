@@ -5,6 +5,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
 import { saveQuizResult } from "../firebase/quizResults";
+import { checkAndAwardBadges } from "../firebase/badges";
+import { showBadgeUnlockAlert } from "../utils/badgeAlert";
 import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "QuizResult">;
@@ -23,7 +25,11 @@ export default function QuizResultScreen({ navigation, route }: Props) {
     started.current = true;
 
     saveQuizResult(user.uid, lessonId, score, total)
-      .then((result) => setXpEarned(result.xpEarned))
+      .then(async (result) => {
+        setXpEarned(result.xpEarned);
+        const newlyEarnedBadges = await checkAndAwardBadges(user.uid);
+        await showBadgeUnlockAlert(newlyEarnedBadges);
+      })
       .finally(() => setSaving(false));
   }, [user]);
 

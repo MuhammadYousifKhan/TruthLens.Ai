@@ -5,6 +5,8 @@ import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
 import { generateMockResult } from "../utils/mockAnalyzer";
 import { saveScanAndAwardXp } from "../firebase/scans";
+import { checkAndAwardBadges } from "../firebase/badges";
+import { showBadgeUnlockAlert } from "../utils/badgeAlert";
 import { colors, fontSize, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Analyzing">;
@@ -45,6 +47,8 @@ export default function AnalyzingScreen({ navigation, route }: Props) {
       const result = generateMockResult();
       if (user) {
         await saveScanAndAwardXp(user.uid, imageUri, result);
+        const newlyEarnedBadges = await checkAndAwardBadges(user.uid);
+        await showBadgeUnlockAlert(newlyEarnedBadges);
       }
 
       navigation.replace("Result", { imageUri, ...result });
