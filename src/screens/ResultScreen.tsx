@@ -70,6 +70,15 @@ export default function ResultScreen({ navigation, route }: Props) {
         <Text style={styles.explanationText}>{explanation}</Text>
       </View>
 
+      {probability >= 55 && (
+        <Pressable
+          style={styles.deepfakeLink}
+          onPress={() => navigation.navigate("DeepfakeHelp")}
+        >
+          <Text style={styles.deepfakeLinkText}>Is this a deepfake of someone you know?</Text>
+        </Pressable>
+      )}
+
       <Pressable
         style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
         onPress={() => navigation.navigate("Guide", { imageUri, imageUrl })}
@@ -191,6 +200,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: colors.text,
     lineHeight: 20,
+  },
+  deepfakeLink: {
+    minHeight: touchTarget.minHeight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  deepfakeLinkText: {
+    color: colors.textMuted,
+    fontSize: fontSize.body,
+    textDecorationLine: "underline",
   },
   primaryButton: {
     width: "100%",

@@ -19,6 +19,7 @@ const secondaryCards: DashboardCard[] = [
   { key: "Quiz", label: "Quiz", icon: "quiz", onPress: (nav) => nav.navigate("Learn") },
   { key: "Achievements", label: "Achievements", icon: "emoji-events", onPress: (nav) => nav.navigate("Achievements") },
   { key: "Profile", label: "Profile", icon: "person", onPress: (nav) => nav.navigate("Profile") },
+  { key: "DeepfakeHelp", label: "If it's a deepfake", icon: "shield", onPress: (nav) => nav.navigate("DeepfakeHelp") },
 ];
 
 const pauseCard: DashboardCard = {
