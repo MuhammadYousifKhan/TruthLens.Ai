@@ -6,6 +6,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { guideSteps } from "../data/guideSteps";
 import { factCheckSources } from "../data/factCheckSources";
+import { useAuth } from "../context/AuthContext";
+import { awardVerificationActionXp } from "../firebase/actions";
 import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Guide">;
@@ -15,10 +17,19 @@ const CROSS_CHECK_STEP = 3;
 
 export default function GuideScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
+  const { user } = useAuth();
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   function toggle(index: number) {
     setChecked((prev) => ({ ...prev, [index]: !prev[index] }));
+  }
+
+  function handleContinue() {
+    const allChecked = guideSteps.every((_, index) => checked[index]);
+    if (allChecked && user) {
+      awardVerificationActionXp(user.uid, "checklist_completed").catch(() => {});
+    }
+    navigation.navigate("Pause", { imageUri, imageUrl });
   }
 
   function openReverseSearch(provider: "tineye" | "lens") {
@@ -94,7 +105,7 @@ export default function GuideScreen({ navigation, route }: Props) {
 
       <Pressable
         style={({ pressed }) => [styles.continueButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("Pause", { imageUri, imageUrl })}
+        onPress={handleContinue}
       >
         <Text style={styles.continueButtonText}>Continue</Text>
       </Pressable>

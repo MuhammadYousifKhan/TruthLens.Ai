@@ -4,6 +4,8 @@ import * as Sharing from "expo-sharing";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
+import { useAuth } from "../context/AuthContext";
+import { awardVerificationActionXp } from "../firebase/actions";
 import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Pause">;
@@ -19,6 +21,7 @@ const CHECKS: { id: CheckId; label: string }[] = [
 
 export default function PauseScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
+  const { user } = useAuth();
   const hasImage = Boolean(imageUri);
 
   const [checks, setChecks] = useState<Record<CheckId, boolean>>({
@@ -36,6 +39,13 @@ export default function PauseScreen({ navigation, route }: Props) {
 
   function toggleCheck(id: CheckId) {
     setChecks((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function verifyFirst() {
+    if (user) {
+      awardVerificationActionXp(user.uid, "chose_verify_first").catch(() => {});
+    }
+    navigation.navigate("Guide", { imageUri, imageUrl });
   }
 
   async function shareAnyway() {
@@ -67,7 +77,7 @@ export default function PauseScreen({ navigation, route }: Props) {
 
       <Pressable
         style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("Guide", { imageUri, imageUrl })}
+        onPress={verifyFirst}
       >
         <Text style={styles.secondaryButtonText}>I'll verify first</Text>
       </Pressable>

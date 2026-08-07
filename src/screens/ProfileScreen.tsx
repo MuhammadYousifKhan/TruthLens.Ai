@@ -5,6 +5,7 @@ import { auth } from "../firebase/config";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useQuizResults } from "../hooks/useQuizResults";
 import { useBadges } from "../hooks/useBadges";
+import { useVerificationActions } from "../hooks/useVerificationActions";
 import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
 import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
@@ -13,6 +14,7 @@ export default function ProfileScreen() {
   const { profile, loading } = useUserProfile();
   const { results } = useQuizResults();
   const { earnedIds } = useBadges();
+  const { count: verificationCount } = useVerificationActions();
 
   const completedLessons = lessons.filter((lesson) => results[lesson.id]);
 
@@ -42,6 +44,15 @@ export default function ProfileScreen() {
           </Text>
           <Text style={styles.statLabel}>Lessons completed</Text>
         </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Verification habits</Text>
+      <View style={styles.card}>
+        <Text style={styles.habitsText}>
+          {verificationCount === 0
+            ? "You haven't verified before sharing yet — try the Pause screen next time you scan something."
+            : `You've verified before sharing ${verificationCount} time${verificationCount === 1 ? "" : "s"}. Keep it up.`}
+        </Text>
       </View>
 
       <Text style={styles.sectionTitle}>Quiz scores</Text>
@@ -151,6 +162,11 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.body,
     color: colors.textMuted,
+  },
+  habitsText: {
+    fontSize: fontSize.body,
+    color: colors.text,
+    lineHeight: 20,
   },
   quizRow: {
     flexDirection: "row",
