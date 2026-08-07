@@ -9,15 +9,19 @@ const PASS_RATIO = 0.6;
 // Returns the ids of any badges newly earned by this check so the caller can
 // show a celebratory dialog.
 export async function checkAndAwardBadges(uid: string): Promise<string[]> {
-  const [scansSnap, quizResultsSnap, badgesSnap] = await Promise.all([
+  const [scansSnap, quizResultsSnap, gameResultsSnap, badgesSnap] = await Promise.all([
     getDocs(collection(db, "users", uid, "scans")),
     getDocs(collection(db, "users", uid, "quizResults")),
+    getDocs(collection(db, "users", uid, "gameResults")),
     getDocs(collection(db, "users", uid, "badges")),
   ]);
 
   const alreadyEarned = new Set(badgesSnap.docs.map((d) => d.id));
   const quizResults = quizResultsSnap.docs.map(
     (d) => d.data() as { score: number; total: number }
+  );
+  const gameResults = gameResultsSnap.docs.map(
+    (d) => d.data() as { bestScore: number; total: number }
   );
 
   const newlyEarned: string[] = [];
@@ -36,6 +40,12 @@ export async function checkAndAwardBadges(uid: string): Promise<string[]> {
   }
   if (!alreadyEarned.has("sharp_eye") && quizResults.some((r) => r.total > 0 && r.score === r.total)) {
     newlyEarned.push("sharp_eye");
+  }
+  if (
+    !alreadyEarned.has("sharp_spotter") &&
+    gameResults.some((r) => r.total > 0 && r.bestScore === r.total)
+  ) {
+    newlyEarned.push("sharp_spotter");
   }
 
   if (newlyEarned.length === 0) return [];

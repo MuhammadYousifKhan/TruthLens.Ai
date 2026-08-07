@@ -12,6 +12,7 @@ import ResultScreen from "../screens/ResultScreen";
 import GuideScreen from "../screens/GuideScreen";
 import PauseScreen from "../screens/PauseScreen";
 import DeepfakeHelpScreen from "../screens/DeepfakeHelpScreen";
+import GameScreen from "../screens/GameScreen";
 import LearnHubScreen from "../screens/LearnHubScreen";
 import LessonDetailScreen from "../screens/LessonDetailScreen";
 import QuizScreen from "../screens/QuizScreen";
@@ -78,6 +79,11 @@ export default function RootNavigator() {
               name="DeepfakeHelp"
               component={DeepfakeHelpScreen}
               options={{ title: "If It's a Deepfake" }}
+            />
+            <Stack.Screen
+              name="Game"
+              component={GameScreen}
+              options={{ title: "Spot the Fake" }}
             />
             <Stack.Screen
               name="Learn"

@@ -17,6 +17,7 @@ type DashboardCard = {
 const secondaryCards: DashboardCard[] = [
   { key: "Learn", label: "Learn", icon: "school", onPress: (nav) => nav.navigate("Learn") },
   { key: "Quiz", label: "Quiz", icon: "quiz", onPress: (nav) => nav.navigate("Learn") },
+  { key: "Game", label: "Spot the fake", icon: "visibility", onPress: (nav) => nav.navigate("Game") },
   { key: "Achievements", label: "Achievements", icon: "emoji-events", onPress: (nav) => nav.navigate("Achievements") },
   { key: "Profile", label: "Profile", icon: "person", onPress: (nav) => nav.navigate("Profile") },
   { key: "DeepfakeHelp", label: "If it's a deepfake", icon: "shield", onPress: (nav) => nav.navigate("DeepfakeHelp") },

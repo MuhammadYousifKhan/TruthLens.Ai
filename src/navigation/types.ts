@@ -19,6 +19,7 @@ export type RootStackParamList = {
   Guide: { imageUri?: string; imageUrl?: string } | undefined;
   Pause: { imageUri?: string; imageUrl?: string } | undefined;
   DeepfakeHelp: undefined;
+  Game: undefined;
   Learn: undefined;
   LessonDetail: { lessonId: string };
   Quiz: { lessonId: string };

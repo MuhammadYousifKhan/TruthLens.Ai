@@ -28,4 +28,9 @@ export const badges: BadgeDefinition[] = [
     name: "Sharp Eye",
     description: "Score 100% on any quiz",
   },
+  {
+    id: "sharp_spotter",
+    name: "Sharp Spotter",
+    description: "Get a perfect score in Spot the Fake",
+  },
 ];
