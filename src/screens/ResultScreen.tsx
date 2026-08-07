@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CommonActions } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
@@ -17,8 +17,12 @@ function verdictFor(probability: number) {
 }
 
 export default function ResultScreen({ navigation, route }: Props) {
-  const { imageUri, probability, confidence, flags, explanation } = route.params;
+  const { imageUri, imageUrl, probability, confidence, flags, explanation, tells, source } = route.params;
   const verdict = verdictFor(probability);
+  const sourceNote =
+    source === "model"
+      ? "Analyzed by an open detection model (probabilistic)."
+      : "Offline estimate — verify manually.";
 
   function scanAnother() {
     navigation.dispatch(
@@ -26,13 +30,33 @@ export default function ResultScreen({ navigation, route }: Props) {
     );
   }
 
+  function shareResult() {
+    // Slice 3 (Pause before you share) replaces this with real navigation.
+    Alert.alert("Coming soon", "The pause-before-share screen is being added next.");
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Image source={{ uri: imageUri }} style={styles.thumbnail} resizeMode="cover" />
 
-      <Text style={[styles.probability, { color: verdict.color }]}>{probability}%</Text>
       <Text style={[styles.verdictLabel, { color: verdict.color }]}>{verdict.label}</Text>
-      <Text style={styles.confidence}>{confidence}% confidence</Text>
+      <Text style={styles.disclaimer}>This is an estimate, not proof. Always verify before sharing.</Text>
+      <Text style={styles.metaLine}>
+        Estimated {probability}% • {confidence}% confidence
+      </Text>
+      <Text style={styles.sourceNote}>{sourceNote}</Text>
+
+      {tells && tells.length > 0 && (
+        <View style={styles.tellsCard}>
+          <Text style={styles.cardHeading}>What to look at</Text>
+          {tells.map((tell) => (
+            <View key={tell.label} style={styles.tellRow}>
+              <Text style={styles.tellLabel}>{tell.label}</Text>
+              <Text style={styles.tellWhy}>{tell.why}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       <View style={styles.flagsCard}>
         {flags.map((flag) => (
@@ -49,9 +73,16 @@ export default function ResultScreen({ navigation, route }: Props) {
 
       <Pressable
         style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("Guide")}
+        onPress={() => navigation.navigate("Guide", { imageUri, imageUrl })}
       >
         <Text style={styles.primaryButtonText}>Learn how to verify this</Text>
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
+        onPress={shareResult}
+      >
+        <Text style={styles.secondaryButtonText}>Share</Text>
       </Pressable>
 
       <Pressable style={styles.textButton} onPress={scanAnother}>
@@ -77,21 +108,55 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     marginBottom: spacing.lg,
   },
-  probability: {
-    fontSize: 40,
-    fontWeight: "700",
-  },
   verdictLabel: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    marginTop: spacing.xs,
+    fontSize: fontSize.heading,
+    fontWeight: "700",
     textAlign: "center",
   },
-  confidence: {
+  disclaimer: {
     fontSize: fontSize.body,
     color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  metaLine: {
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
+  },
+  sourceNote: {
+    fontSize: fontSize.body,
+    color: colors.placeholder,
     marginTop: spacing.xs,
     marginBottom: spacing.lg,
+    textAlign: "center",
+  },
+  cardHeading: {
+    fontSize: fontSize.subtitle,
+    fontWeight: "600",
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  tellsCard: {
+    width: "100%",
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  tellRow: {
+    marginBottom: spacing.sm,
+  },
+  tellLabel: {
+    fontSize: fontSize.body,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  tellWhy: {
+    fontSize: fontSize.body,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   flagsCard: {
     width: "100%",
@@ -138,6 +203,21 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: colors.white,
+    fontSize: fontSize.subtitle,
+    fontWeight: "600",
+  },
+  secondaryButton: {
+    width: "100%",
+    minHeight: touchTarget.minHeight,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
+  secondaryButtonText: {
+    color: colors.primary,
     fontSize: fontSize.subtitle,
     fontWeight: "600",
   },

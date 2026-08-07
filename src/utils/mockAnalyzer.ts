@@ -10,13 +10,15 @@ export type ScanResult = {
   confidence: number;
   flags: string[];
   explanation: string;
+  source?: "model" | "offline";
+  modelLabel?: string;
 };
 
-function randomInt(min: number, max: number): number {
+export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickRandom<T>(pool: T[], count: number): T[] {
+export function pickRandom<T>(pool: T[], count: number): T[] {
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
