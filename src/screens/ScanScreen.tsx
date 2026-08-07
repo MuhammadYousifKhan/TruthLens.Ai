@@ -1,10 +1,21 @@
 import { useState } from "react";
-import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  Body,
+  Caption,
+  FadeIn,
+  GhostButton,
+  GlassCard,
+  PressScale,
+  PrimaryButton,
+  Screen,
+  Title,
+} from "../components";
+import { absoluteFill, colors, motion, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Scan">;
 
@@ -34,88 +45,111 @@ export default function ScanScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <Screen scroll center>
       {!imageUri ? (
-        <Pressable style={styles.uploadCard} onPress={pickImage}>
-          <MaterialIcons name="add-photo-alternate" size={40} color={colors.primary} />
-          <Text style={styles.uploadText}>Tap to upload an image or screenshot</Text>
-        </Pressable>
-      ) : (
-        <View style={styles.previewSection}>
-          <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
-          <Pressable
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-            onPress={analyze}
+        <FadeIn>
+          <Title center style={styles.prompt}>
+            What are you checking?
+          </Title>
+          <Body muted center style={styles.lede}>
+            Upload a photo or a screenshot from your feed.
+          </Body>
+
+          <PressScale
+            onPress={pickImage}
+            scaleTo={0.98}
+            accessibilityRole="button"
+            accessibilityLabel="Upload an image"
+            accessibilityHint="Opens your photo library to pick an image to scan"
           >
-            <Text style={styles.primaryButtonText}>Analyze Image</Text>
-          </Pressable>
-          <Pressable style={styles.textButton} onPress={pickImage}>
-            <Text style={styles.textButtonLabel}>Choose a different image</Text>
-          </Pressable>
-        </View>
+            {/* Dashed edge is the one place a border does semantic work: it
+                marks a slot waiting to be filled rather than a filled card. */}
+            <GlassCard style={styles.dropzone} highlight={false}>
+              <View style={styles.dropIcon}>
+                <MaterialIcons name="add-photo-alternate" size={32} color={colors.primary} />
+              </View>
+              <Body center style={styles.dropLabel}>
+                Tap to upload an image
+              </Body>
+              <Caption center>JPG or PNG, from your library</Caption>
+            </GlassCard>
+          </PressScale>
+        </FadeIn>
+      ) : (
+        <FadeIn>
+          <View style={styles.previewFrame}>
+            <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
+            {/* Hairline over the photo edge so it belongs to the glass system
+                rather than sitting on the screen as a bare rectangle. */}
+            <View style={styles.previewEdge} pointerEvents="none" />
+          </View>
+
+          <FadeIn delay={motion.stagger}>
+            <PrimaryButton
+              label="Analyze image"
+              onPress={analyze}
+              icon="auto-awesome"
+              style={styles.analyze}
+              accessibilityHint="Runs the AI detector on this image"
+            />
+            <GhostButton label="Choose a different image" onPress={pickImage} icon="swap-horiz" />
+          </FadeIn>
+        </FadeIn>
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: spacing.xl,
-    justifyContent: "center",
+  prompt: {
+    marginBottom: spacing.sm,
   },
-  uploadCard: {
-    borderWidth: 2,
-    borderStyle: "dashed",
-    borderColor: colors.border,
-    borderRadius: radius.card,
-    paddingVertical: spacing.xxl,
+  lede: {
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  dropzone: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.card,
-  },
-  uploadText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    textAlign: "center",
+    paddingVertical: spacing.xxxl,
     paddingHorizontal: spacing.xl,
+    borderStyle: "dashed",
+    borderColor: colors.glassBorderStrong,
+    gap: spacing.xs,
   },
-  previewSection: {
+  dropIcon: {
+    width: 68,
+    height: 68,
+    borderRadius: radius.pill,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    marginBottom: spacing.lg,
+  },
+  dropLabel: {
+    fontWeight: "600",
+  },
+  previewFrame: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: radius.hero,
+    overflow: "hidden",
+    marginBottom: spacing.xl,
+    backgroundColor: colors.glassSunken,
   },
   previewImage: {
     width: "100%",
-    aspectRatio: 1,
-    borderRadius: radius.card,
-    marginBottom: spacing.lg,
-    backgroundColor: colors.card,
+    height: "100%",
   },
-  primaryButton: {
-    width: "100%",
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+  previewEdge: {
+    ...absoluteFill,
+    borderRadius: radius.hero,
+    borderWidth: 1,
+    borderColor: colors.glassBorderStrong,
   },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-  },
-  textButton: {
-    minHeight: touchTarget.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
-  },
-  textButtonLabel: {
-    color: colors.primary,
-    fontSize: fontSize.body,
-  },
-  pressed: {
-    opacity: 0.85,
+  analyze: {
+    marginBottom: spacing.sm,
   },
 });

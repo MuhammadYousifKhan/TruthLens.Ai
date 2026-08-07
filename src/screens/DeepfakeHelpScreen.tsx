@@ -1,106 +1,152 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import * as WebBrowser from "expo-web-browser";
+import { MaterialIcons } from "@expo/vector-icons";
 import { deepfakeResponseSteps } from "../data/deepfakeResponseSteps";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  Body,
+  BodyStrong,
+  Caption,
+  FadeIn,
+  GlassCard,
+  PressScale,
+  Screen,
+  Subtitle,
+} from "../components";
+import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
 
+/**
+ * First-response steps for someone who has found a deepfake of a person they
+ * know.
+ *
+ * Whoever opens this screen is likely distressed, so the design is calmer than
+ * the rest of the app: no glow, no accent fills, one clear numbered sequence.
+ * Red is used only on the framing chip, never on the steps themselves —
+ * alarming someone who is already alarmed does not help them act.
+ */
 export default function DeepfakeHelpScreen() {
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.intro}>
-        If you've found a deepfake of someone you know, here's what to do in the first few
-        minutes.
-      </Text>
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.introRow}>
+          <View style={styles.introChip}>
+            <MaterialIcons name="shield" size={24} color={colors.danger} />
+          </View>
+          <Subtitle style={styles.introText}>
+            Here's what to do in the first few minutes.
+          </Subtitle>
+        </View>
+        <Caption style={styles.reassurance}>
+          Work through these in order. You don't have to do all of them at once.
+        </Caption>
+      </FadeIn>
 
       {deepfakeResponseSteps.map((step, index) => (
-        <View key={step.title} style={styles.card}>
-          <View style={styles.stepBadge}>
-            <Text style={styles.stepNumber}>{index + 1}</Text>
-          </View>
-          <Text style={styles.stepTitle}>{step.title}</Text>
-          <Text style={styles.stepBody}>{step.body}</Text>
-
-          {step.actions && (
-            <View style={styles.actionRow}>
-              {step.actions.map((action) => (
-                <Pressable
-                  key={action.label}
-                  style={styles.actionButton}
-                  onPress={() => WebBrowser.openBrowserAsync(action.url)}
-                >
-                  <Text style={styles.actionButtonText}>{action.label}</Text>
-                </Pressable>
-              ))}
+        <FadeIn key={step.title} delay={motion.stagger * (1 + index)}>
+          <GlassCard style={styles.card}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepBadge}>
+                <BodyStrong color={colors.primary}>{index + 1}</BodyStrong>
+              </View>
+              <BodyStrong style={styles.stepTitle}>{step.title}</BodyStrong>
             </View>
-          )}
-        </View>
+
+            <Body muted style={styles.stepBody}>
+              {step.body}
+            </Body>
+
+            {step.actions && (
+              <View style={styles.actionRow}>
+                {step.actions.map((action) => (
+                  <PressScale
+                    key={action.label}
+                    onPress={() => WebBrowser.openBrowserAsync(action.url)}
+                    accessibilityRole="link"
+                    accessibilityLabel={action.label}
+                    accessibilityHint="Opens in your browser"
+                    style={styles.actionButton}
+                  >
+                    <MaterialIcons name="open-in-new" size={16} color={colors.primary} />
+                    <Caption color={colors.primary} style={styles.actionLabel}>
+                      {action.label}
+                    </Caption>
+                  </PressScale>
+                ))}
+              </View>
+            )}
+          </GlassCard>
+        </FadeIn>
       ))}
-    </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  introRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  introChip: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.danger + "55",
+  },
+  introText: {
     flex: 1,
-    backgroundColor: colors.background,
   },
-  content: {
-    padding: spacing.xl,
-  },
-  intro: {
-    fontSize: fontSize.subtitle,
-    color: colors.text,
-    marginBottom: spacing.lg,
-    lineHeight: 22,
+  reassurance: {
+    marginBottom: spacing.xl,
   },
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
     padding: spacing.lg,
     marginBottom: spacing.lg,
   },
-  stepBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
+  stepHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.md,
     marginBottom: spacing.sm,
   },
-  stepNumber: {
-    color: colors.white,
-    fontSize: fontSize.body,
-    fontWeight: "700",
+  stepBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorderStrong,
   },
   stepTitle: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: spacing.xs,
+    flex: 1,
   },
   stepBody: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   actionRow: {
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
   },
   actionButton: {
-    minHeight: touchTarget.minHeight,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.xs,
+    minHeight: touchTarget.minHeight,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.primary + "66",
+    backgroundColor: colors.glass,
   },
-  actionButtonText: {
-    color: colors.primary,
-    fontSize: fontSize.body,
+  actionLabel: {
     fontWeight: "600",
   },
 });

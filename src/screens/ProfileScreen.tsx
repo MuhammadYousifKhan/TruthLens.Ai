@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { signOut } from "firebase/auth";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -10,7 +10,22 @@ import { useBadges } from "../hooks/useBadges";
 import { useVerificationActions } from "../hooks/useVerificationActions";
 import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  BlurCard,
+  Body,
+  BodyStrong,
+  Caption,
+  Display,
+  FadeIn,
+  GlassCard,
+  Heading,
+  PrimaryButton,
+  Screen,
+  SecondaryButton,
+  SectionLabel,
+  Title,
+} from "../components";
+import { colors, motion, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
@@ -27,113 +42,161 @@ export default function ProfileScreen({ navigation }: Props) {
   }
 
   if (loading || !profile) {
-    return <View style={styles.container} />;
+    return (
+      <Screen center>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </Screen>
+    );
   }
 
+  const initial = profile.name?.trim()?.[0]?.toUpperCase() ?? "?";
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{profile.name}</Text>
-        <Text style={styles.email}>{profile.email}</Text>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{profile.xp}</Text>
-          <Text style={styles.statLabel}>Total XP</Text>
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Heading color={colors.primary}>{initial}</Heading>
+          </View>
+          <View style={styles.headerCopy}>
+            <Title>{profile.name}</Title>
+            <Caption>{profile.email}</Caption>
+          </View>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>
-            {completedLessons.length}/{lessons.length}
-          </Text>
-          <Text style={styles.statLabel}>Lessons completed</Text>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger}>
+        <View style={styles.statsRow}>
+          <BlurCard style={styles.statCard} tone="strong">
+            <Display color={colors.primary}>{profile.xp}</Display>
+            <Caption center>Total XP</Caption>
+          </BlurCard>
+          <BlurCard style={styles.statCard} tone="strong">
+            <Display color={colors.secondary}>
+              {completedLessons.length}/{lessons.length}
+            </Display>
+            <Caption center>Lessons done</Caption>
+          </BlurCard>
         </View>
-      </View>
+      </FadeIn>
 
-      <Text style={styles.sectionTitle}>Verification habits</Text>
-      <View style={styles.card}>
-        <Text style={styles.habitsText}>
-          {verificationCount === 0
-            ? "You haven't verified before sharing yet — try the Pause screen next time you scan something."
-            : `You've verified before sharing ${verificationCount} time${verificationCount === 1 ? "" : "s"}. Keep it up.`}
-        </Text>
-      </View>
+      <FadeIn delay={motion.stagger * 2}>
+        <SectionLabel>Verification habits</SectionLabel>
+        {/* The one stat the app actually cares about, so it gets its own
+            surface and a sentence rather than a bare number. */}
+        <GlassCard
+          style={styles.habitsCard}
+          accent={verificationCount > 0 ? colors.success : undefined}
+        >
+          <MaterialIcons
+            name={verificationCount > 0 ? "verified-user" : "lightbulb-outline"}
+            size={22}
+            color={verificationCount > 0 ? colors.success : colors.warning}
+          />
+          <Body style={styles.habitsText}>
+            {verificationCount === 0
+              ? "You haven't verified before sharing yet — try the Pause screen next time you scan something."
+              : `You've verified before sharing ${verificationCount} time${
+                  verificationCount === 1 ? "" : "s"
+                }. Keep it up.`}
+          </Body>
+        </GlassCard>
+      </FadeIn>
 
-      <Text style={styles.sectionTitle}>Quiz scores</Text>
-      <View style={styles.card}>
-        {completedLessons.length === 0 ? (
-          <Text style={styles.emptyText}>No quizzes completed yet.</Text>
-        ) : (
-          completedLessons.map((lesson) => {
-            const result = results[lesson.id];
+      <FadeIn delay={motion.stagger * 3}>
+        <SectionLabel>Quiz scores</SectionLabel>
+        <GlassCard style={styles.card}>
+          {completedLessons.length === 0 ? (
+            <Body muted style={styles.emptyText}>
+              No quizzes completed yet.
+            </Body>
+          ) : (
+            completedLessons.map((lesson, index) => {
+              const result = results[lesson.id];
+              return (
+                <View
+                  key={lesson.id}
+                  style={[
+                    styles.quizRow,
+                    index < completedLessons.length - 1 && styles.divider,
+                  ]}
+                >
+                  <Body style={styles.quizTitle}>{lesson.title}</Body>
+                  <BodyStrong color={colors.primary}>
+                    {result.score}/{result.total}
+                  </BodyStrong>
+                </View>
+              );
+            })
+          )}
+        </GlassCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 4}>
+        <SectionLabel>Badges</SectionLabel>
+        <View style={styles.badgesStrip}>
+          {badges.map((badge) => {
+            const earned = earnedIds.has(badge.id);
             return (
-              <View key={lesson.id} style={styles.quizRow}>
-                <Text style={styles.quizLessonTitle}>{lesson.title}</Text>
-                <Text style={styles.quizScore}>
-                  {result.score}/{result.total}
-                </Text>
+              <View
+                key={badge.id}
+                style={[styles.badgeItem, !earned && styles.badgeLocked]}
+                accessibilityLabel={`${badge.name}. ${earned ? "Earned" : "Locked"}`}
+              >
+                <MaterialIcons
+                  name={earned ? "military-tech" : "lock-outline"}
+                  size={26}
+                  color={earned ? colors.warning : colors.textFaint}
+                />
+                <Caption center color={earned ? colors.text : colors.textFaint}>
+                  {badge.name}
+                </Caption>
               </View>
             );
-          })
-        )}
-      </View>
+          })}
+        </View>
+      </FadeIn>
 
-      <Text style={styles.sectionTitle}>Badges</Text>
-      <View style={styles.badgesStrip}>
-        {badges.map((badge) => {
-          const earned = earnedIds.has(badge.id);
-          return (
-            <View key={badge.id} style={styles.badgeItem}>
-              <MaterialIcons
-                name="military-tech"
-                size={28}
-                color={earned ? colors.primary : colors.border}
-              />
-              <Text style={[styles.badgeLabel, !earned && styles.badgeLabelLocked]}>
-                {badge.name}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.reportCardButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("ReportCard")}
-      >
-        <Text style={styles.reportCardButtonText}>Share my MIL habits</Text>
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [styles.logOutButton, pressed && styles.pressed]}
-        onPress={handleLogOut}
-      >
-        <Text style={styles.logOutText}>Log out</Text>
-      </Pressable>
-    </ScrollView>
+      <FadeIn delay={motion.stagger * 5} style={styles.actions}>
+        <PrimaryButton
+          label="Share my MIL habits"
+          onPress={() => navigation.navigate("ReportCard")}
+          icon="ios-share"
+          style={styles.action}
+        />
+        {/* Destructive, so it is outlined in the danger tone rather than
+            filled — it must be findable but never the easiest thing to hit. */}
+        <SecondaryButton
+          label="Log out"
+          onPress={handleLogOut}
+          icon="logout"
+          tone={colors.danger}
+        />
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
-  },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
     marginBottom: spacing.xl,
   },
-  name: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.text,
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.primary + "55",
   },
-  email: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.body,
-    color: colors.textMuted,
+  headerCopy: {
+    flex: 1,
+    gap: spacing.xs,
   },
   statsRow: {
     flexDirection: "row",
@@ -142,105 +205,67 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    padding: spacing.lg,
     alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
-  statValue: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.primary,
-  },
-  statLabel: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
+  habitsCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
     padding: spacing.lg,
     marginBottom: spacing.xl,
   },
-  emptyText: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-  },
   habitsText: {
-    fontSize: fontSize.body,
-    color: colors.text,
-    lineHeight: 20,
+    flex: 1,
+    lineHeight: 21,
+  },
+  card: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  emptyText: {
+    paddingVertical: spacing.lg,
   },
   quizRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: spacing.xs,
+    justifyContent: "space-between",
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
   },
-  quizLessonTitle: {
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.glassBorder,
+  },
+  quizTitle: {
     flex: 1,
-    fontSize: fontSize.body,
-    color: colors.text,
-  },
-  quizScore: {
-    fontSize: fontSize.body,
-    fontWeight: "600",
-    color: colors.primary,
   },
   badgesStrip: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.lg,
+    gap: spacing.md,
     marginBottom: spacing.xl,
   },
   badgeItem: {
+    width: 88,
     alignItems: "center",
-    width: 80,
-  },
-  badgeLabel: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.body,
-    color: colors.text,
-    textAlign: "center",
-  },
-  badgeLabelLocked: {
-    color: colors.textMuted,
-  },
-  reportCardButton: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-  },
-  reportCardButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-  },
-  logOutButton: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.card,
+    backgroundColor: colors.glass,
     borderWidth: 1,
-    borderColor: colors.danger,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: colors.glassBorder,
   },
-  logOutText: {
-    color: colors.danger,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  badgeLocked: {
+    opacity: 0.55,
   },
-  pressed: {
-    opacity: 0.85,
+  actions: {
+    marginTop: spacing.sm,
+  },
+  action: {
+    marginBottom: spacing.md,
   },
 });

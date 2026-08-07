@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { CommonActions } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
@@ -7,7 +8,20 @@ import { useAuth } from "../context/AuthContext";
 import { saveQuizResult } from "../firebase/quizResults";
 import { checkAndAwardBadges } from "../firebase/badges";
 import { showBadgeUnlockAlert } from "../utils/badgeAlert";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  BlurCard,
+  Body,
+  Caption,
+  FadeIn,
+  GhostButton,
+  Hero,
+  Meter,
+  Pill,
+  PrimaryButton,
+  Screen,
+  Title,
+} from "../components";
+import { colors, motion, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "QuizResult">;
 
@@ -34,6 +48,7 @@ export default function QuizResultScreen({ navigation, route }: Props) {
   }, [user]);
 
   const passed = total > 0 && score / total >= PASS_RATIO;
+  const tone = passed ? colors.success : colors.warning;
 
   function backToLessons() {
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Learn" }] }));
@@ -43,83 +58,119 @@ export default function QuizResultScreen({ navigation, route }: Props) {
     navigation.replace("Quiz", { lessonId });
   }
 
-  return (
-    <View style={styles.container}>
-      {saving ? (
-        <ActivityIndicator size="large" color={colors.primary} />
-      ) : (
-        <>
-          <Text style={[styles.score, { color: passed ? colors.success : colors.danger }]}>
-            {score}/{total}
-          </Text>
-          <Text style={styles.passLabel}>{passed ? "Passed!" : "Not quite — try again"}</Text>
-          <Text style={styles.xpText}>
-            {xpEarned > 0 ? `+${xpEarned} XP earned` : "No new XP (already completed)"}
-          </Text>
+  if (saving) {
+    return (
+      <Screen center>
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Caption center>Saving your result</Caption>
+        </View>
+      </Screen>
+    );
+  }
 
-          <Pressable
-            style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-            onPress={backToLessons}
-          >
-            <Text style={styles.primaryButtonText}>Back to lessons</Text>
-          </Pressable>
-          <Pressable style={styles.textButton} onPress={retakeQuiz}>
-            <Text style={styles.textButtonLabel}>Retake quiz</Text>
-          </Pressable>
-        </>
-      )}
-    </View>
+  return (
+    <Screen scroll center>
+      <FadeIn>
+        {/* The score card is a hero surface — this is the payoff moment for
+            the whole lesson, so it gets real blur and the largest type. */}
+        <BlurCard style={styles.card} tone="strong" accent={tone}>
+          <View style={[styles.badge, { borderColor: tone + "55" }]}>
+            <MaterialIcons
+              name={passed ? "workspace-premium" : "refresh"}
+              size={30}
+              color={tone}
+            />
+          </View>
+
+          <Hero center color={tone} style={styles.score}>
+            {score}/{total}
+          </Hero>
+
+          {/* A failed quiz is framed as "not quite yet", not as a red error.
+              The whole app is about building a habit, and habits survive
+              missed attempts. */}
+          <Title center style={styles.verdict}>
+            {passed ? "Passed" : "Not quite — try again"}
+          </Title>
+
+          <Meter
+            value={total > 0 ? score / total : 0}
+            tone={tone}
+            animateIn
+            style={styles.meter}
+            accessibilityLabel={`Scored ${score} out of ${total}`}
+          />
+
+          <View style={styles.pillRow}>
+            <Pill
+              label={xpEarned > 0 ? `+${xpEarned} XP` : "No new XP"}
+              icon="bolt"
+              tone={xpEarned > 0 ? colors.primary : colors.textMuted}
+            />
+          </View>
+
+          {xpEarned === 0 && (
+            <Caption center style={styles.xpNote}>
+              You've already earned XP for this lesson.
+            </Caption>
+          )}
+        </BlurCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger} style={styles.actions}>
+        <PrimaryButton
+          label="Back to lessons"
+          onPress={backToLessons}
+          icon="menu-book"
+          style={styles.action}
+        />
+        <GhostButton label="Retake quiz" onPress={retakeQuiz} icon="refresh" />
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  loading: {
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.lg,
+  },
+  card: {
+    alignItems: "center",
     padding: spacing.xl,
-  },
-  score: {
-    fontSize: 48,
-    fontWeight: "700",
-  },
-  passLabel: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    color: colors.text,
-    marginTop: spacing.xs,
-  },
-  xpText: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
-  primaryButton: {
+  badge: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+  },
+  score: {
+    marginBottom: spacing.xs,
+  },
+  verdict: {
+    marginBottom: spacing.lg,
+  },
+  meter: {
+    marginBottom: spacing.lg,
+  },
+  pillRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  xpNote: {
+    marginTop: spacing.md,
+  },
+  actions: {
     width: "100%",
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
   },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-  },
-  textButton: {
-    minHeight: touchTarget.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
-  },
-  textButtonLabel: {
-    color: colors.primary,
-    fontSize: fontSize.body,
-  },
-  pressed: {
-    opacity: 0.85,
+  action: {
+    marginBottom: spacing.xs,
   },
 });

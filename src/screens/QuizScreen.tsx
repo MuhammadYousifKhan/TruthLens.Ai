@@ -1,9 +1,21 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { quizQuestions } from "../data/quizQuestions";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  Body,
+  Caption,
+  FadeIn,
+  GlassCard,
+  Meter,
+  PressScale,
+  PrimaryButton,
+  Screen,
+  Title,
+} from "../components";
+import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Quiz">;
 
@@ -41,130 +53,138 @@ export default function QuizScreen({ navigation, route }: Props) {
 
   if (!question) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.questionText}>No quiz questions found for this lesson.</Text>
-      </View>
+      <Screen center>
+        <GlassCard style={styles.missing}>
+          <MaterialIcons name="quiz" size={28} color={colors.textFaint} />
+          <Body muted center>
+            No quiz questions found for this lesson.
+          </Body>
+        </GlassCard>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.progressText}>
-        Question {questionIndex + 1} of {questions.length}
-      </Text>
-      <Text style={styles.questionText}>{question.question}</Text>
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.progressRow}>
+          <Caption>
+            Question {questionIndex + 1} of {questions.length}
+          </Caption>
+          <Caption color={colors.primary}>
+            {score} correct
+          </Caption>
+        </View>
+        <Meter
+          value={(questionIndex + (hasAnswered ? 1 : 0)) / questions.length}
+          tone={colors.secondary}
+          height={6}
+          style={styles.progressMeter}
+          accessibilityLabel={`Question ${questionIndex + 1} of ${questions.length}`}
+        />
+      </FadeIn>
 
-      <View style={styles.optionsList}>
-        {question.options.map((option, index) => {
-          const isCorrectOption = index === question.correctIndex;
-          const isSelected = index === selectedIndex;
+      {/* Keyed on the index so each question animates in fresh — the change of
+          content is the feedback that the answer registered. */}
+      <FadeIn key={questionIndex} delay={motion.stagger}>
+        <Title style={styles.question}>{question.question}</Title>
 
-          const isHighlighted =
-            hasAnswered && (isCorrectOption || (isSelected && !isCorrectOption));
+        <View style={styles.options}>
+          {question.options.map((option, index) => {
+            const isCorrectOption = index === question.correctIndex;
+            const isSelected = index === selectedIndex;
+            const revealCorrect = hasAnswered && isCorrectOption;
+            const revealWrong = hasAnswered && isSelected && !isCorrectOption;
 
-          let optionStyle = styles.option;
-          if (hasAnswered && isCorrectOption) {
-            optionStyle = styles.optionCorrect;
-          } else if (hasAnswered && isSelected && !isCorrectOption) {
-            optionStyle = styles.optionIncorrect;
-          }
+            const tone = revealCorrect
+              ? colors.success
+              : revealWrong
+              ? colors.danger
+              : undefined;
 
-          return (
-            <Pressable
-              key={option}
-              style={optionStyle}
-              onPress={() => selectOption(index)}
-              disabled={hasAnswered}
-            >
-              <Text style={isHighlighted ? styles.optionTextHighlighted : styles.optionText}>
-                {option}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+            return (
+              <PressScale
+                key={option}
+                onPress={() => selectOption(index)}
+                disabled={hasAnswered}
+                accessibilityRole="button"
+                accessibilityLabel={option}
+                accessibilityState={{ disabled: hasAnswered, selected: isSelected }}
+                style={styles.optionWrapper}
+              >
+                <GlassCard
+                  style={styles.option}
+                  radius={radius.input}
+                  accent={tone}
+                  highlight={!hasAnswered}
+                >
+                  <Body style={styles.optionText} color={tone ?? colors.text}>
+                    {option}
+                  </Body>
+                  {/* Result is stated by icon as well as colour. */}
+                  {revealCorrect && (
+                    <MaterialIcons name="check-circle" size={20} color={colors.success} />
+                  )}
+                  {revealWrong && (
+                    <MaterialIcons name="cancel" size={20} color={colors.danger} />
+                  )}
+                </GlassCard>
+              </PressScale>
+            );
+          })}
+        </View>
+      </FadeIn>
 
       {hasAnswered && (
-        <Pressable style={styles.nextButton} onPress={goNext}>
-          <Text style={styles.nextButtonText}>
-            {isLastQuestion ? "See results" : "Next question"}
-          </Text>
-        </Pressable>
+        <FadeIn style={styles.next}>
+          <PrimaryButton
+            label={isLastQuestion ? "See results" : "Next question"}
+            onPress={goNext}
+            icon="arrow-forward"
+            iconTrailing
+          />
+        </FadeIn>
       )}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: spacing.xl,
-  },
-  progressText: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: spacing.sm,
   },
-  questionText: {
-    fontSize: fontSize.title,
-    fontWeight: "600",
-    color: colors.text,
+  progressMeter: {
     marginBottom: spacing.xl,
   },
-  optionsList: {
+  question: {
+    marginBottom: spacing.xl,
+  },
+  options: {
     gap: spacing.md,
   },
+  optionWrapper: {
+    width: "100%",
+  },
   option: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
     minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  optionCorrect: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.success,
-    backgroundColor: colors.success,
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  optionIncorrect: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    backgroundColor: colors.danger,
-    justifyContent: "center",
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   optionText: {
-    fontSize: fontSize.body,
-    color: colors.text,
+    flex: 1,
   },
-  optionTextHighlighted: {
-    fontSize: fontSize.body,
-    color: colors.white,
-    fontWeight: "600",
-  },
-  nextButton: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+  next: {
     marginTop: spacing.xl,
   },
-  nextButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  missing: {
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.xl,
   },
 });

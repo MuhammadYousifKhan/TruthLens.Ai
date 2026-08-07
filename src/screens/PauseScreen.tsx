@@ -1,24 +1,51 @@
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import * as Sharing from "expo-sharing";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
 import { awardVerificationActionXp } from "../firebase/actions";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  Body,
+  BodyStrong,
+  Caption,
+  FadeIn,
+  GlassCard,
+  Heading,
+  Meter,
+  PressScale,
+  PrimaryButton,
+  Screen,
+  SecondaryButton,
+} from "../components";
+import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Pause">;
 type CheckId = "source" | "seenElsewhere" | "emotion";
 
 const COOLDOWN_MS = 2500;
+const TICK_MS = 100;
 
-const CHECKS: { id: CheckId; label: string }[] = [
-  { id: "source", label: "Do you know the source?" },
-  { id: "seenElsewhere", label: "Have you seen it elsewhere?" },
-  { id: "emotion", label: "Does it make you feel a strong emotion?" },
+const CHECKS: { id: CheckId; label: string; hint: string }[] = [
+  { id: "source", label: "Do you know the source?", hint: "Who posted it first?" },
+  { id: "seenElsewhere", label: "Have you seen it elsewhere?", hint: "One outlet is not enough" },
+  {
+    id: "emotion",
+    label: "Does it make you feel a strong emotion?",
+    hint: "Outrage travels faster than truth",
+  },
 ];
 
+/**
+ * The friction screen.
+ *
+ * The whole point is to slow the share down, so the design leans into the
+ * wait instead of hiding it: a meter fills for 2.5s before the share button
+ * unlocks, and "I'll verify first" is styled as the primary action while it
+ * does. The delay is visible and finite, which makes it feel deliberate rather
+ * than broken.
+ */
 export default function PauseScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
   const { user } = useAuth();
@@ -29,12 +56,18 @@ export default function PauseScreen({ navigation, route }: Props) {
     seenElsewhere: false,
     emotion: false,
   });
-  const [canShare, setCanShare] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const canShare = elapsed >= COOLDOWN_MS;
 
   useEffect(() => {
     if (!hasImage) return;
-    const timer = setTimeout(() => setCanShare(true), COOLDOWN_MS);
-    return () => clearTimeout(timer);
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const next = Date.now() - start;
+      setElapsed(next);
+      if (next >= COOLDOWN_MS) clearInterval(interval);
+    }, TICK_MS);
+    return () => clearInterval(interval);
   }, [hasImage]);
 
   function toggleCheck(id: CheckId) {
@@ -59,144 +92,166 @@ export default function PauseScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Pause. 3 quick checks before you share.</Text>
-
-      {CHECKS.map((check) => (
-        <Pressable
-          key={check.id}
-          style={styles.checkRow}
-          onPress={() => toggleCheck(check.id)}
-        >
-          <View style={[styles.checkbox, checks[check.id] && styles.checkboxChecked]}>
-            {checks[check.id] && <MaterialIcons name="check" size={16} color={colors.white} />}
-          </View>
-          <Text style={styles.checkLabel}>{check.label}</Text>
-        </Pressable>
-      ))}
-
-      <Pressable
-        style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
-        onPress={verifyFirst}
-      >
-        <Text style={styles.secondaryButtonText}>I'll verify first</Text>
-      </Pressable>
-
-      {hasImage ? (
-        <Pressable
-          disabled={!canShare}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            !canShare && styles.primaryButtonDisabled,
-            pressed && canShare && styles.pressed,
-          ]}
-          onPress={shareAnyway}
-        >
-          <Text style={styles.primaryButtonText}>
-            {canShare ? "Share anyway" : "Just a moment..."}
-          </Text>
-        </Pressable>
-      ) : (
-        <View style={styles.practiceNote}>
-          <Text style={styles.practiceNoteText}>
-            Practice mode — scan an image first to actually share it.
-          </Text>
-          <Pressable
-            style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}
-            onPress={() => navigation.navigate("Scan")}
-          >
-            <Text style={styles.secondaryButtonText}>Scan an image</Text>
-          </Pressable>
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.kickerChip}>
+          <MaterialIcons name="pause-circle-outline" size={26} color={colors.warning} />
         </View>
-      )}
-    </ScrollView>
+        <Heading style={styles.title}>Pause.</Heading>
+        <Body muted style={styles.lede}>
+          Three quick checks before this leaves your hands.
+        </Body>
+      </FadeIn>
+
+      {CHECKS.map((check, index) => {
+        const isChecked = checks[check.id];
+        return (
+          <FadeIn key={check.id} delay={motion.stagger * (1 + index)}>
+            <PressScale
+              onPress={() => toggleCheck(check.id)}
+              accessibilityRole="checkbox"
+              accessibilityLabel={check.label}
+              accessibilityHint={check.hint}
+              accessibilityState={{ checked: isChecked }}
+              style={styles.checkWrapper}
+            >
+              <GlassCard
+                style={styles.checkRow}
+                accent={isChecked ? colors.warning : undefined}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    isChecked && { backgroundColor: colors.warning, borderColor: colors.warning },
+                  ]}
+                >
+                  {isChecked && <MaterialIcons name="check" size={16} color={colors.background} />}
+                </View>
+                <View style={styles.checkCopy}>
+                  <BodyStrong>{check.label}</BodyStrong>
+                  <Caption>{check.hint}</Caption>
+                </View>
+              </GlassCard>
+            </PressScale>
+          </FadeIn>
+        );
+      })}
+
+      <FadeIn delay={motion.stagger * 4} style={styles.actions}>
+        {/* Verifying is the primary action here, not sharing. The visual
+            hierarchy has to agree with what the screen is asking for. */}
+        <PrimaryButton
+          label="I'll verify first"
+          onPress={verifyFirst}
+          icon="fact-check"
+          style={styles.action}
+          accessibilityHint="Opens the fact-checking checklist"
+        />
+
+        {hasImage ? (
+          <View>
+            {!canShare && (
+              <View style={styles.cooldown}>
+                <Meter
+                  value={elapsed / COOLDOWN_MS}
+                  tone={colors.textMuted}
+                  height={4}
+                  accessibilityLabel="Share unlocks in a moment"
+                />
+                <Caption center style={styles.cooldownNote}>
+                  Take a breath — sharing unlocks in a moment
+                </Caption>
+              </View>
+            )}
+            <SecondaryButton
+              label={canShare ? "Share anyway" : "Waiting…"}
+              onPress={shareAnyway}
+              disabled={!canShare}
+              icon="ios-share"
+              tone={colors.textMuted}
+            />
+          </View>
+        ) : (
+          <GlassCard style={styles.practiceNote} tone="sunken" highlight={false}>
+            <MaterialIcons name="science" size={18} color={colors.textMuted} />
+            <Caption style={styles.practiceText}>
+              Practice mode — scan an image first to actually share it.
+            </Caption>
+            <SecondaryButton
+              label="Scan an image"
+              onPress={() => navigation.navigate("Scan")}
+              icon="document-scanner"
+              style={styles.practiceButton}
+            />
+          </GlassCard>
+        )}
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
+  kickerChip: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.warning + "55",
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: fontSize.heading,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+  lede: {
+    marginBottom: spacing.xl,
+  },
+  checkWrapper: {
+    marginBottom: spacing.md,
   },
   checkRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
+    gap: spacing.md,
     padding: spacing.lg,
-    marginBottom: spacing.md,
     minHeight: touchTarget.minHeight,
   },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 6,
+    borderRadius: 7,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.glassBorderStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: spacing.md,
   },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-  },
-  checkLabel: {
+  checkCopy: {
     flex: 1,
-    fontSize: fontSize.subtitle,
-    color: colors.text,
+    gap: 2,
   },
-  secondaryButton: {
-    width: "100%",
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+  actions: {
     marginTop: spacing.lg,
   },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  action: {
+    marginBottom: spacing.md,
   },
-  primaryButton: {
-    width: "100%",
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.md,
+  cooldown: {
+    marginBottom: spacing.md,
   },
-  primaryButtonDisabled: {
-    backgroundColor: colors.border,
-  },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  cooldownNote: {
+    marginTop: spacing.sm,
   },
   practiceNote: {
-    marginTop: spacing.md,
     alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.lg,
   },
-  practiceNoteText: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
+  practiceText: {
     textAlign: "center",
-    marginBottom: spacing.sm,
   },
-  pressed: {
-    opacity: 0.85,
+  practiceButton: {
+    marginTop: spacing.sm,
   },
 });
