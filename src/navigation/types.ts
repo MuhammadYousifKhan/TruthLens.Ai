@@ -26,4 +26,5 @@ export type RootStackParamList = {
   QuizResult: { lessonId: string; score: number; total: number };
   Achievements: undefined;
   Profile: undefined;
+  ReportCard: undefined;
 };

@@ -19,6 +19,7 @@ import QuizScreen from "../screens/QuizScreen";
 import QuizResultScreen from "../screens/QuizResultScreen";
 import AchievementsScreen from "../screens/AchievementsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import ReportCardScreen from "../screens/ReportCardScreen";
 import { colors } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -111,6 +112,11 @@ export default function RootNavigator() {
               options={{ title: "Achievements" }}
             />
             <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
+            <Stack.Screen
+              name="ReportCard"
+              component={ReportCardScreen}
+              options={{ title: "My MIL Habits" }}
+            />
           </>
         )}
       </Stack.Navigator>

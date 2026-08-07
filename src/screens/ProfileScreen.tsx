@@ -1,6 +1,8 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { signOut } from "firebase/auth";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/types";
 import { auth } from "../firebase/config";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useQuizResults } from "../hooks/useQuizResults";
@@ -10,7 +12,9 @@ import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
 import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
 
-export default function ProfileScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
+
+export default function ProfileScreen({ navigation }: Props) {
   const { profile, loading } = useUserProfile();
   const { results } = useQuizResults();
   const { earnedIds } = useBadges();
@@ -92,6 +96,13 @@ export default function ProfileScreen() {
           );
         })}
       </View>
+
+      <Pressable
+        style={({ pressed }) => [styles.reportCardButton, pressed && styles.pressed]}
+        onPress={() => navigation.navigate("ReportCard")}
+      >
+        <Text style={styles.reportCardButtonText}>Share my MIL habits</Text>
+      </Pressable>
 
       <Pressable
         style={({ pressed }) => [styles.logOutButton, pressed && styles.pressed]}
@@ -202,6 +213,19 @@ const styles = StyleSheet.create({
   },
   badgeLabelLocked: {
     color: colors.textMuted,
+  },
+  reportCardButton: {
+    minHeight: touchTarget.minHeight,
+    borderRadius: radius.input,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  reportCardButtonText: {
+    color: colors.white,
+    fontSize: fontSize.subtitle,
+    fontWeight: "600",
   },
   logOutButton: {
     minHeight: touchTarget.minHeight,
