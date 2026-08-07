@@ -13,8 +13,8 @@ type Props = NativeStackScreenProps<RootStackParamList, "Guide">;
 const REVERSE_SEARCH_STEP = 1;
 const CROSS_CHECK_STEP = 3;
 
-export default function GuideScreen({ route }: Props) {
-  const { imageUrl } = route.params ?? {};
+export default function GuideScreen({ navigation, route }: Props) {
+  const { imageUri, imageUrl } = route.params ?? {};
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   function toggle(index: number) {
@@ -91,6 +91,13 @@ export default function GuideScreen({ route }: Props) {
           )}
         </View>
       ))}
+
+      <Pressable
+        style={({ pressed }) => [styles.continueButton, pressed && styles.pressed]}
+        onPress={() => navigation.navigate("Pause", { imageUri, imageUrl })}
+      >
+        <Text style={styles.continueButtonText}>Continue</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -170,5 +177,21 @@ const styles = StyleSheet.create({
     color: colors.placeholder,
     width: "100%",
     marginTop: spacing.xs,
+  },
+  continueButton: {
+    minHeight: touchTarget.minHeight,
+    borderRadius: radius.input,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing.sm,
+  },
+  continueButtonText: {
+    color: colors.white,
+    fontSize: fontSize.subtitle,
+    fontWeight: "600",
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

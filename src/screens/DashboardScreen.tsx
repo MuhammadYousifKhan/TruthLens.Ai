@@ -7,18 +7,26 @@ import { colors, fontSize, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
 
-type NoParamRoute = "Learn" | "Achievements" | "Profile";
-
-const secondaryCards: {
-  key: NoParamRoute;
+type DashboardCard = {
+  key: string;
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
-}[] = [
-  { key: "Learn", label: "Learn", icon: "school" },
-  { key: "Learn", label: "Quiz", icon: "quiz" },
-  { key: "Achievements", label: "Achievements", icon: "emoji-events" },
-  { key: "Profile", label: "Profile", icon: "person" },
+  onPress: (navigation: Props["navigation"]) => void;
+};
+
+const secondaryCards: DashboardCard[] = [
+  { key: "Learn", label: "Learn", icon: "school", onPress: (nav) => nav.navigate("Learn") },
+  { key: "Quiz", label: "Quiz", icon: "quiz", onPress: (nav) => nav.navigate("Learn") },
+  { key: "Achievements", label: "Achievements", icon: "emoji-events", onPress: (nav) => nav.navigate("Achievements") },
+  { key: "Profile", label: "Profile", icon: "person", onPress: (nav) => nav.navigate("Profile") },
 ];
+
+const pauseCard: DashboardCard = {
+  key: "Pause",
+  label: "Think before you share",
+  icon: "pause-circle-outline",
+  onPress: (nav) => nav.navigate("Pause"),
+};
 
 export default function DashboardScreen({ navigation }: Props) {
   const { profile, loading } = useUserProfile();
@@ -45,12 +53,20 @@ export default function DashboardScreen({ navigation }: Props) {
         <Text style={styles.scanSubtitle}>Check if an image is real before you share it</Text>
       </Pressable>
 
+      <Pressable
+        style={({ pressed }) => [styles.pauseCard, pressed && styles.cardPressed]}
+        onPress={() => pauseCard.onPress(navigation)}
+      >
+        <MaterialIcons name={pauseCard.icon} size={28} color={colors.primary} />
+        <Text style={styles.pauseLabel}>{pauseCard.label}</Text>
+      </Pressable>
+
       <View style={styles.grid}>
         {secondaryCards.map((card) => (
           <Pressable
-            key={card.label}
+            key={card.key}
             style={({ pressed }) => [styles.gridCard, pressed && styles.cardPressed]}
-            onPress={() => navigation.navigate(card.key)}
+            onPress={() => card.onPress(navigation)}
           >
             <MaterialIcons name={card.icon} size={28} color={colors.primary} />
             <Text style={styles.gridLabel}>{card.label}</Text>
@@ -109,6 +125,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     fontSize: fontSize.body,
     color: colors.onPrimaryMuted,
+  },
+  pauseCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  pauseLabel: {
+    fontSize: fontSize.subtitle,
+    fontWeight: "600",
+    color: colors.text,
   },
   grid: {
     flexDirection: "row",

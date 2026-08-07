@@ -1,4 +1,4 @@
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CommonActions } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
@@ -31,8 +31,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   }
 
   function shareResult() {
-    // Slice 3 (Pause before you share) replaces this with real navigation.
-    Alert.alert("Coming soon", "The pause-before-share screen is being added next.");
+    navigation.navigate("Pause", { imageUri, imageUrl });
   }
 
   return (

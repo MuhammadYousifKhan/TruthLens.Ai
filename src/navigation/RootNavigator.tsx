@@ -10,6 +10,7 @@ import ScanScreen from "../screens/ScanScreen";
 import AnalyzingScreen from "../screens/AnalyzingScreen";
 import ResultScreen from "../screens/ResultScreen";
 import GuideScreen from "../screens/GuideScreen";
+import PauseScreen from "../screens/PauseScreen";
 import LearnHubScreen from "../screens/LearnHubScreen";
 import LessonDetailScreen from "../screens/LessonDetailScreen";
 import QuizScreen from "../screens/QuizScreen";
@@ -66,6 +67,11 @@ export default function RootNavigator() {
               name="Guide"
               component={GuideScreen}
               options={{ title: "Fact-Checking Guide" }}
+            />
+            <Stack.Screen
+              name="Pause"
+              component={PauseScreen}
+              options={{ title: "Think Before You Share" }}
             />
             <Stack.Screen
               name="Learn"

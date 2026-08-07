@@ -17,6 +17,7 @@ export type RootStackParamList = {
     modelLabel?: string;
   };
   Guide: { imageUri?: string; imageUrl?: string } | undefined;
+  Pause: { imageUri?: string; imageUrl?: string } | undefined;
   Learn: undefined;
   LessonDetail: { lessonId: string };
   Quiz: { lessonId: string };
