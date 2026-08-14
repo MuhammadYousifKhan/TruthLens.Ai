@@ -16,18 +16,20 @@ type CandidateModel = { id: string; isAiLabel: (label: string) => boolean };
 const HF_TOKEN = process.env.EXPO_PUBLIC_HF_TOKEN;
 
 // hf-inference is HF's legacy serverless "Inference API", now routed through
-// the unified Inference Providers host. Not independently load-tested yet —
-// confirm on first real device run (see AnalyzingScreen). If this 404s,
-// the legacy host `https://api-inference.huggingface.co/models/{id}` is the
-// fallback to try.
+// the unified Inference Providers host. Requires a token with the
+// "inference.serverless.write" (Inference Providers) permission specifically —
+// a plain "read" fine-grained token 403s even though it can read the repo.
 const HF_BASE_URL = "https://router.huggingface.co/hf-inference/models";
 const PER_MODEL_TIMEOUT_MS = 6000;
 
-// Candidate AI-detector models, tried in order. None are confirmed "warm" on
-// the free tier yet — data-driven on purpose so the working model (and its
-// exact label strings) can be swapped in after live testing without touching
-// any other code. isAiLabel is a loose substring match as a safety net until
-// exact labels are confirmed.
+// Candidate AI-detector models, tried in order, first successful response wins
+// (not an ensemble). Live-tested 2026-08-15 against 2 real photos + 2 AI faces:
+// Organika (3/4 correct, one false positive on a real photo at 99% confidence)
+// beats dima806 (2/4, biased toward always saying fake) and umm-maybe (2/4,
+// biased toward always saying human/real — misses StyleGAN2-style faces
+// specifically). Order below is already best-first; a wrong call from Organika
+// is expected free-tier detector noise, not a bug — it's exactly what the
+// "estimate, not proof" disclaimer on the result screen exists for.
 const CANDIDATE_MODELS: CandidateModel[] = [
   { id: "Organika/sdxl-detector", isAiLabel: (l) => /artificial|ai|fake|generated|synthetic/i.test(l) },
   { id: "dima806/ai_vs_real_image_detection", isAiLabel: (l) => /\bai\b|fake|artificial|generated/i.test(l) },

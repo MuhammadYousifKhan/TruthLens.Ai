@@ -8,10 +8,10 @@ import {
   Body,
   BodyStrong,
   Caption,
-  Display,
   FadeIn,
   GhostButton,
   GlassCard,
+  Heading,
   Meter,
   Pill,
   PressScale,
@@ -19,7 +19,6 @@ import {
   Screen,
   SecondaryButton,
   SectionLabel,
-  Subtitle,
 } from "../components";
 import { absoluteFill, colors, motion, radius, spacing } from "../theme/theme";
 
@@ -90,12 +89,13 @@ export default function ResultScreen({ navigation, route }: Props) {
             <View style={styles.verdictCopy}>
               <View style={styles.verdictLabelRow}>
                 <MaterialIcons name={verdict.icon} size={20} color={verdict.color} />
-                <BodyStrong color={verdict.color} style={styles.verdictShort}>
+                <Caption color={verdict.color} style={styles.verdictShort}>
                   {verdict.short}
-                </BodyStrong>
+                </Caption>
               </View>
-              <Display color={verdict.color}>{probability}%</Display>
-              <Caption>estimated AI-generated</Caption>
+              <Heading color={verdict.color} style={styles.verdictHeadline}>
+                {verdict.label}
+              </Heading>
             </View>
           </View>
 
@@ -107,9 +107,8 @@ export default function ResultScreen({ navigation, route }: Props) {
             accessibilityLabel={`${probability} percent estimated AI-generated. ${verdict.label}.`}
           />
 
-          <Subtitle style={styles.verdictHeadline}>{verdict.label}</Subtitle>
-
           <View style={styles.pillRow}>
+            <Pill label={`${probability}% estimated`} icon="percent" tone={verdict.color} />
             <Pill label={`${confidence}% confidence`} icon="insights" tone={colors.info} />
             <Pill
               label={source === "model" ? "Model" : "Offline estimate"}
@@ -254,7 +253,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   verdictHeadline: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xs,
   },
   pillRow: {
     flexDirection: "row",
