@@ -1,157 +1,338 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { CommonActions } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  BlurCard,
+  Body,
+  BodyStrong,
+  Caption,
+  Display,
+  FadeIn,
+  GhostButton,
+  GlassCard,
+  Meter,
+  Pill,
+  PressScale,
+  PrimaryButton,
+  Screen,
+  SecondaryButton,
+  SectionLabel,
+  Subtitle,
+} from "../components";
+import { absoluteFill, colors, motion, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Result">;
 
+/**
+ * Verdict styling.
+ *
+ * The verdict never rides on colour alone — each band carries its own icon and
+ * its own words, so the result survives greyscale and colour-blindness. The
+ * hedged middle band is deliberately amber rather than red: "uncertain" is a
+ * real answer here, not a failure.
+ */
 function verdictFor(probability: number) {
   if (probability >= 55) {
-    return { label: "Likely AI-generated", color: colors.danger };
+    return {
+      label: "Likely AI-generated",
+      short: "Likely fake",
+      color: colors.danger,
+      icon: "report-problem" as const,
+    };
   }
   if (probability >= 35) {
-    return { label: "Uncertain — verify before sharing", color: colors.warning };
+    return {
+      label: "Uncertain — verify before sharing",
+      short: "Uncertain",
+      color: colors.warning,
+      icon: "help-outline" as const,
+    };
   }
-  return { label: "Likely authentic", color: colors.success };
+  return {
+    label: "Likely authentic",
+    short: "Likely real",
+    color: colors.success,
+    icon: "verified" as const,
+  };
 }
 
 export default function ResultScreen({ navigation, route }: Props) {
-  const { imageUri, probability, confidence, flags, explanation } = route.params;
+  const { imageUri, imageUrl, probability, confidence, flags, explanation, tells, source } =
+    route.params;
   const verdict = verdictFor(probability);
+  const sourceNote =
+    source === "model"
+      ? "Analyzed by an open detection model (probabilistic)."
+      : "Offline estimate — verify manually.";
 
   function scanAnother() {
-    navigation.dispatch(
-      CommonActions.reset({ index: 0, routes: [{ name: "Dashboard" }] })
-    );
+    navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Dashboard" }] }));
+  }
+
+  function shareResult() {
+    navigation.navigate("Pause", { imageUri, imageUrl });
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Image source={{ uri: imageUri }} style={styles.thumbnail} resizeMode="cover" />
+    <Screen scroll>
+      {/* Hero verdict. One of the four surfaces with real backdrop blur —
+          it is the moment the whole flow exists to deliver. */}
+      <FadeIn>
+        <BlurCard style={styles.verdictCard} tone="strong" accent={verdict.color}>
+          <View style={styles.verdictHeader}>
+            <View style={styles.thumbFrame}>
+              <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              <View style={styles.thumbEdge} pointerEvents="none" />
+            </View>
 
-      <Text style={[styles.probability, { color: verdict.color }]}>{probability}%</Text>
-      <Text style={[styles.verdictLabel, { color: verdict.color }]}>{verdict.label}</Text>
-      <Text style={styles.confidence}>{confidence}% confidence</Text>
-
-      <View style={styles.flagsCard}>
-        {flags.map((flag) => (
-          <View key={flag} style={styles.flagRow}>
-            <View style={[styles.flagDot, { backgroundColor: verdict.color }]} />
-            <Text style={styles.flagText}>{flag}</Text>
+            <View style={styles.verdictCopy}>
+              <View style={styles.verdictLabelRow}>
+                <MaterialIcons name={verdict.icon} size={20} color={verdict.color} />
+                <BodyStrong color={verdict.color} style={styles.verdictShort}>
+                  {verdict.short}
+                </BodyStrong>
+              </View>
+              <Display color={verdict.color}>{probability}%</Display>
+              <Caption>estimated AI-generated</Caption>
+            </View>
           </View>
-        ))}
-      </View>
 
-      <View style={styles.explanationCard}>
-        <Text style={styles.explanationText}>{explanation}</Text>
-      </View>
+          <Meter
+            value={probability / 100}
+            tone={verdict.color}
+            animateIn
+            style={styles.meter}
+            accessibilityLabel={`${probability} percent estimated AI-generated. ${verdict.label}.`}
+          />
 
-      <Pressable
-        style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("Guide")}
-      >
-        <Text style={styles.primaryButtonText}>Learn how to verify this</Text>
-      </Pressable>
+          <Subtitle style={styles.verdictHeadline}>{verdict.label}</Subtitle>
 
-      <Pressable style={styles.textButton} onPress={scanAnother}>
-        <Text style={styles.textButtonLabel}>Scan another image</Text>
-      </Pressable>
-    </ScrollView>
+          <View style={styles.pillRow}>
+            <Pill label={`${confidence}% confidence`} icon="insights" tone={colors.info} />
+            <Pill
+              label={source === "model" ? "Model" : "Offline estimate"}
+              icon={source === "model" ? "memory" : "wifi-off"}
+              tone={colors.textMuted}
+            />
+          </View>
+        </BlurCard>
+      </FadeIn>
+
+      {/* Placed directly under the number on purpose: the caveat has to travel
+          with the score, not sit somewhere it can be scrolled past. */}
+      <FadeIn delay={motion.stagger}>
+        <GlassCard style={styles.disclaimer} tone="sunken" highlight={false}>
+          <MaterialIcons name="info-outline" size={16} color={colors.textMuted} />
+          <Caption style={styles.disclaimerText}>
+            This is an estimate, not proof. Always verify before sharing. {sourceNote}
+          </Caption>
+        </GlassCard>
+      </FadeIn>
+
+      {tells && tells.length > 0 && (
+        <FadeIn delay={motion.stagger * 2}>
+          <SectionLabel>What to look at</SectionLabel>
+          <GlassCard style={styles.card}>
+            {tells.map((tell, index) => (
+              <View
+                key={tell.label}
+                style={[styles.tellRow, index < tells.length - 1 && styles.divider]}
+              >
+                <View style={styles.tellIndex}>
+                  <Caption color={colors.primary}>{index + 1}</Caption>
+                </View>
+                <View style={styles.tellCopy}>
+                  <BodyStrong>{tell.label}</BodyStrong>
+                  <Caption>{tell.why}</Caption>
+                </View>
+              </View>
+            ))}
+          </GlassCard>
+        </FadeIn>
+      )}
+
+      <FadeIn delay={motion.stagger * 3}>
+        <SectionLabel>Signals</SectionLabel>
+        <GlassCard style={styles.card}>
+          {flags.map((flag, index) => (
+            <View
+              key={flag}
+              style={[styles.flagRow, index < flags.length - 1 && styles.divider]}
+            >
+              <View style={[styles.flagDot, { backgroundColor: verdict.color }]} />
+              <Body style={styles.flagText}>{flag}</Body>
+            </View>
+          ))}
+        </GlassCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 4}>
+        <SectionLabel>What this means</SectionLabel>
+        <GlassCard style={styles.explanationCard}>
+          <Body>{explanation}</Body>
+        </GlassCard>
+      </FadeIn>
+
+      {probability >= 55 && (
+        <FadeIn delay={motion.stagger * 5}>
+          <PressScale
+            onPress={() => navigation.navigate("DeepfakeHelp")}
+            accessibilityRole="button"
+            accessibilityLabel="Is this a deepfake of someone you know?"
+            accessibilityHint="Opens first-response steps for deepfake targets"
+            style={styles.deepfakeWrapper}
+          >
+            <GlassCard style={styles.deepfakeCard} accent={colors.danger}>
+              <MaterialIcons name="shield" size={20} color={colors.danger} />
+              <Body style={styles.deepfakeText}>Is this a deepfake of someone you know?</Body>
+              <MaterialIcons name="chevron-right" size={20} color={colors.danger} />
+            </GlassCard>
+          </PressScale>
+        </FadeIn>
+      )}
+
+      <FadeIn delay={motion.stagger * 6} style={styles.actions}>
+        <PrimaryButton
+          label="Learn how to verify this"
+          onPress={() => navigation.navigate("Guide", { imageUri, imageUrl })}
+          icon="fact-check"
+          style={styles.action}
+        />
+        <SecondaryButton
+          label="Share"
+          onPress={shareResult}
+          icon="ios-share"
+          style={styles.action}
+          accessibilityHint="Opens the pause-before-you-share check"
+        />
+        <GhostButton label="Scan another image" onPress={scanAnother} icon="refresh" />
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
+  verdictCard: {
     padding: spacing.xl,
-    alignItems: "center",
-  },
-  thumbnail: {
-    width: "100%",
-    aspectRatio: 1,
-    borderRadius: radius.card,
-    backgroundColor: colors.card,
-    marginBottom: spacing.lg,
-  },
-  probability: {
-    fontSize: 40,
-    fontWeight: "700",
-  },
-  verdictLabel: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    marginTop: spacing.xs,
-    textAlign: "center",
-  },
-  confidence: {
-    fontSize: fontSize.body,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  flagsCard: {
-    width: "100%",
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    padding: spacing.lg,
     marginBottom: spacing.md,
+  },
+  verdictHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.lg,
+  },
+  thumbFrame: {
+    width: 88,
+    height: 88,
+    borderRadius: radius.input,
+    overflow: "hidden",
+    backgroundColor: colors.glassSunken,
+  },
+  thumbEdge: {
+    ...absoluteFill,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: colors.glassBorderStrong,
+  },
+  verdictCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  verdictLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  verdictShort: {
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    fontSize: 12,
+  },
+  meter: {
+    marginTop: spacing.lg,
+  },
+  verdictHeadline: {
+    marginTop: spacing.lg,
+  },
+  pillRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  disclaimer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  disclaimerText: {
+    flex: 1,
+  },
+  card: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.glassBorder,
+  },
+  tellRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  tellIndex: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  tellCopy: {
+    flex: 1,
+    gap: 2,
   },
   flagRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.sm,
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
   },
   flagDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: spacing.sm,
   },
   flagText: {
     flex: 1,
-    fontSize: fontSize.body,
-    color: colors.text,
   },
   explanationCard: {
-    width: "100%",
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
     padding: spacing.lg,
     marginBottom: spacing.xl,
   },
-  explanationText: {
-    fontSize: fontSize.body,
-    color: colors.text,
-    lineHeight: 20,
+  deepfakeWrapper: {
+    marginBottom: spacing.xl,
   },
-  primaryButton: {
-    width: "100%",
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
+  deepfakeCard: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.md,
+    padding: spacing.lg,
   },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  deepfakeText: {
+    flex: 1,
   },
-  textButton: {
-    minHeight: touchTarget.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.sm,
+  actions: {
+    gap: spacing.sm,
   },
-  textButtonLabel: {
-    color: colors.primary,
-    fontSize: fontSize.body,
-  },
-  pressed: {
-    opacity: 0.85,
+  action: {
+    marginBottom: spacing.xs,
   },
 });

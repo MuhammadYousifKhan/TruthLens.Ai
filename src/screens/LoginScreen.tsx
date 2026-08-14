@@ -1,15 +1,6 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -17,7 +8,18 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { createUserDocument } from "../firebase/users";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  BlurCard,
+  Body,
+  Caption,
+  FadeIn,
+  GhostButton,
+  GlassInput,
+  Heading,
+  PrimaryButton,
+  Screen,
+} from "../components";
+import { colors, motion, radius, spacing } from "../theme/theme";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -99,140 +101,141 @@ export default function LoginScreen() {
     setSubmitError(null);
   }
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>TruthLens AI</Text>
-        <Text style={styles.subtitle}>{isSignup ? "Create your account" : "Welcome back"}</Text>
+  // The first field is the only one that can hold a validation error at a
+  // time, so the message renders under whichever field failed.
+  const nameError = fieldError?.startsWith("Enter your name") ? fieldError : null;
+  const emailError = fieldError?.startsWith("Enter a valid email") ? fieldError : null;
+  const passwordError = fieldError?.startsWith("Password must") ? fieldError : null;
 
-        <View style={styles.card}>
+  return (
+    <Screen scroll center avoidKeyboard>
+      <FadeIn>
+        <View style={styles.brandRow}>
+          <View style={styles.mark}>
+            <MaterialIcons name="center-focus-strong" size={26} color={colors.primary} />
+          </View>
+          <Heading>TruthLens AI</Heading>
+        </View>
+        <Body muted style={styles.lede}>
+          {isSignup
+            ? "Build the habit of checking before you share."
+            : "Welcome back — let's keep that streak going."}
+        </Body>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 2}>
+        {/* One of the four hero surfaces that gets real backdrop blur. */}
+        <BlurCard style={styles.card} tone="strong">
           {isSignup && (
-            <TextInput
-              style={styles.input}
+            <GlassInput
+              icon="person-outline"
               placeholder="Name"
-              placeholderTextColor={colors.placeholder}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
+              autoComplete="name"
+              error={nameError}
+              containerStyle={styles.field}
+              accessibilityLabel="Name"
             />
           )}
-          <TextInput
-            style={styles.input}
+
+          <GlassInput
+            icon="alternate-email"
             placeholder="Email"
-            placeholderTextColor={colors.placeholder}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            error={emailError}
+            containerStyle={styles.field}
+            accessibilityLabel="Email"
           />
-          <TextInput
-            style={styles.input}
+
+          <GlassInput
+            icon="lock-outline"
             placeholder="Password"
-            placeholderTextColor={colors.placeholder}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
+            error={passwordError}
+            containerStyle={styles.field}
+            accessibilityLabel="Password"
           />
 
-          {(fieldError || submitError) && (
-            <Text style={styles.errorText}>{fieldError ?? submitError}</Text>
+          {submitError && (
+            <View style={styles.submitError}>
+              <MaterialIcons name="error-outline" size={16} color={colors.danger} />
+              <Caption color={colors.danger} style={styles.submitErrorText}>
+                {submitError}
+              </Caption>
+            </View>
           )}
 
-          <Pressable
-            style={({ pressed }) => [styles.submitButton, pressed && styles.submitButtonPressed]}
+          <PrimaryButton
+            label={isSignup ? "Create account" : "Log in"}
             onPress={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.submitButtonText}>{isSignup ? "Sign up" : "Log in"}</Text>
-            )}
-          </Pressable>
+            loading={loading}
+            icon="arrow-forward"
+            iconTrailing
+            style={styles.submit}
+          />
 
-          <Pressable style={styles.toggleButton} onPress={toggleMode} disabled={loading}>
-            <Text style={styles.toggleText}>
-              {isSignup ? "Already have an account? Log in" : "New here? Sign up"}
-            </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <GhostButton
+            label={isSignup ? "Already have an account? Log in" : "New here? Create an account"}
+            onPress={toggleMode}
+            disabled={loading}
+          />
+        </BlurCard>
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flexGrow: 1,
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
-    padding: spacing.xl,
+    gap: spacing.md,
   },
-  title: {
-    fontSize: fontSize.heading,
-    fontWeight: "700",
-    color: colors.primary,
-    textAlign: "center",
+  mark: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
-  subtitle: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.body,
-    color: colors.textMuted,
+  lede: {
     textAlign: "center",
-    marginBottom: spacing.xl,
+    marginTop: spacing.md,
+    marginBottom: spacing.xxl,
+    paddingHorizontal: spacing.lg,
   },
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    padding: spacing.xl - spacing.xs,
+    padding: spacing.xl,
   },
-  input: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.lg,
-    fontSize: fontSize.body,
-    color: colors.text,
-    marginBottom: spacing.md,
+  field: {
+    marginBottom: spacing.lg,
   },
-  errorText: {
-    color: colors.danger,
-    fontSize: fontSize.body,
-    marginBottom: spacing.md,
-  },
-  submitButton: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
+  submitError: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.dangerSoft,
+    borderRadius: radius.input,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
-  submitButtonPressed: {
-    opacity: 0.85,
+  submitErrorText: {
+    flex: 1,
   },
-  submitButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-  },
-  toggleButton: {
-    minHeight: touchTarget.minHeight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.xs,
-  },
-  toggleText: {
-    color: colors.primary,
-    fontSize: fontSize.body,
+  submit: {
+    marginBottom: spacing.sm,
   },
 });

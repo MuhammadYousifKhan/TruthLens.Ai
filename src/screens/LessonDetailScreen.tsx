@@ -1,8 +1,18 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { lessons } from "../data/lessons";
-import { colors, fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import {
+  Body,
+  Caption,
+  FadeIn,
+  GlassCard,
+  Heading,
+  PrimaryButton,
+  Screen,
+} from "../components";
+import { colors, motion, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "LessonDetail">;
 
@@ -11,60 +21,82 @@ export default function LessonDetailScreen({ navigation, route }: Props) {
 
   if (!lesson) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.bodyText}>Lesson not found.</Text>
-      </View>
+      <Screen center>
+        <GlassCard style={styles.missing}>
+          <MaterialIcons name="search-off" size={28} color={colors.textFaint} />
+          <Body muted center>
+            Lesson not found.
+          </Body>
+        </GlassCard>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{lesson.title}</Text>
-      <Text style={styles.bodyText}>{lesson.body}</Text>
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.kicker}>
+          <View style={styles.kickerChip}>
+            <MaterialIcons name="school" size={18} color={colors.secondary} />
+          </View>
+          <Caption color={colors.secondary}>Lesson</Caption>
+        </View>
+        <Heading style={styles.title}>{lesson.title}</Heading>
+      </FadeIn>
 
-      <Pressable
-        style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
-        onPress={() => navigation.navigate("Quiz", { lessonId: lesson.id })}
-      >
-        <Text style={styles.primaryButtonText}>Take the quiz</Text>
-      </Pressable>
-    </ScrollView>
+      <FadeIn delay={motion.stagger}>
+        {/* Long-form reading gets its own surface with generous padding — the
+            body copy is the product here, not a caption on something else. */}
+        <GlassCard style={styles.readingCard}>
+          <Body style={styles.bodyText}>{lesson.body}</Body>
+        </GlassCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 2}>
+        <PrimaryButton
+          label="Take the quiz"
+          onPress={() => navigation.navigate("Quiz", { lessonId: lesson.id })}
+          icon="arrow-forward"
+          iconTrailing
+          accessibilityHint="Starts the quiz for this lesson"
+        />
+      </FadeIn>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  kicker: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  content: {
-    padding: spacing.xl,
-  },
-  title: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.lg,
-  },
-  bodyText: {
-    fontSize: fontSize.body,
-    color: colors.text,
-    lineHeight: 22,
-    marginBottom: spacing.xl,
-  },
-  primaryButton: {
-    minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
-    backgroundColor: colors.primary,
+  kickerChip: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.secondary + "55",
   },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
+  title: {
+    marginBottom: spacing.xl,
   },
-  pressed: {
-    opacity: 0.85,
+  readingCard: {
+    padding: spacing.xl,
+    marginBottom: spacing.xl,
+  },
+  bodyText: {
+    // Looser than the default body leading: this is the one place in the app
+    // with sustained reading rather than scanning.
+    lineHeight: 25,
+  },
+  missing: {
+    alignItems: "center",
+    gap: spacing.md,
+    padding: spacing.xl,
   },
 });

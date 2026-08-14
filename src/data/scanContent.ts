@@ -26,3 +26,21 @@ export const lowProbabilityExplanations = [
   "No strong signs of AI generation were found, but no detector is perfect — a quick source check is still a good habit.",
   "This image shows characteristics consistent with an authentic photo. Still worth a quick verification before sharing widely.",
 ];
+
+export type Tell = { label: string; why: string };
+
+// "What to look at" teaching block (spec v2 4.4) — framed as "look and judge
+// for yourself", not "the AI says", so these stay independent of whatever
+// detector actually ran.
+export const highProbabilityTells: Tell[] = [
+  { label: "Hands and fingers", why: "AI models often get finger count or hand proportions wrong." },
+  { label: "Lighting vs. background", why: "Check whether shadows and light direction on the subject match the scene." },
+  { label: "Skin and texture", why: "Unnaturally smooth skin or repeating background patterns are common tells." },
+  { label: "Fine detail and text", why: "Warped text, jewelry, or small objects often break down under generation." },
+];
+
+export const lowProbabilityTells: Tell[] = [
+  { label: "Natural imperfections", why: "Real photos usually have small imperfections — sensor noise, slight blur." },
+  { label: "Consistent shadows", why: "Shadow direction and softness typically match a single real light source." },
+  { label: "Coherent background", why: "Real backgrounds have consistent, non-repeating detail rather than warped patterns." },
+];
