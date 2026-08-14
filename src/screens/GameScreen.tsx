@@ -30,8 +30,18 @@ import { absoluteFill, colors, motion, radius, spacing, touchTarget } from "../t
 type Props = NativeStackScreenProps<RootStackParamList, "Game">;
 type Guess = "real" | "ai";
 
+function shuffled<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export default function GameScreen({ navigation }: Props) {
   const { user } = useAuth();
+  const [items, setItems] = useState(() => shuffled(gameItems));
   const [index, setIndex] = useState(0);
   const [guess, setGuess] = useState<Guess | null>(null);
   const [score, setScore] = useState(0);
@@ -39,8 +49,8 @@ export default function GameScreen({ navigation }: Props) {
   const [bestStreak, setBestStreak] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  const item = gameItems[index];
-  const isLast = index === gameItems.length - 1;
+  const item = items[index];
+  const isLast = index === items.length - 1;
   const hasGuessed = guess !== null;
   const wasCorrect = hasGuessed && item && (guess === "ai") === item.isAI;
 
@@ -63,7 +73,7 @@ export default function GameScreen({ navigation }: Props) {
   async function goNext() {
     if (isLast) {
       if (user) {
-        const { xpEarned } = await saveGameResult(user.uid, score, gameItems.length);
+        const { xpEarned } = await saveGameResult(user.uid, score, items.length);
         if (xpEarned > 0) {
           const newlyEarnedBadges = await checkAndAwardBadges(user.uid);
           await showBadgeUnlockAlert(newlyEarnedBadges);
@@ -77,6 +87,7 @@ export default function GameScreen({ navigation }: Props) {
   }
 
   function playAgain() {
+    setItems(shuffled(gameItems));
     setIndex(0);
     setGuess(null);
     setScore(0);
@@ -107,7 +118,7 @@ export default function GameScreen({ navigation }: Props) {
   }
 
   if (finished) {
-    const ratio = score / gameItems.length;
+    const ratio = score / items.length;
     return (
       <Screen scroll center>
         <FadeIn>
@@ -117,14 +128,14 @@ export default function GameScreen({ navigation }: Props) {
             </View>
             <Caption center>Round complete</Caption>
             <Hero center color={colors.primary} style={styles.resultScore}>
-              {score}/{gameItems.length}
+              {score}/{items.length}
             </Hero>
             <Meter
               value={ratio}
               tone={colors.primary}
               animateIn
               style={styles.resultMeter}
-              accessibilityLabel={`Scored ${score} out of ${gameItems.length}`}
+              accessibilityLabel={`Scored ${score} out of ${items.length}`}
             />
             <View style={styles.pillRow}>
               <Pill label={`Best streak ${bestStreak}`} icon="local-fire-department" tone={colors.warning} />
@@ -154,7 +165,7 @@ export default function GameScreen({ navigation }: Props) {
       <FadeIn>
         <View style={styles.statusRow}>
           <Caption>
-            {index + 1} of {gameItems.length}
+            {index + 1} of {items.length}
           </Caption>
           {/* The streak only appears once it exists — an empty streak counter
               is a reminder of failure, not a motivator. */}
@@ -167,11 +178,11 @@ export default function GameScreen({ navigation }: Props) {
           )}
         </View>
         <Meter
-          value={(index + (hasGuessed ? 1 : 0)) / gameItems.length}
+          value={(index + (hasGuessed ? 1 : 0)) / items.length}
           tone={colors.primary}
           height={6}
           style={styles.progressMeter}
-          accessibilityLabel={`Image ${index + 1} of ${gameItems.length}`}
+          accessibilityLabel={`Image ${index + 1} of ${items.length}`}
         />
       </FadeIn>
 
