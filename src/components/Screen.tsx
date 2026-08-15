@@ -89,14 +89,27 @@ export default function Screen({
   return (
     <View style={styles.root}>
       <AuroraBackground />
-      {content}
+      {/* Aurora stays full-bleed behind this; only the actual content column
+          gets capped. Below the cap (any phone, most windows) this is a no-op
+          — width: 100% just fills the space as before. Above it (a wide
+          browser window, a tablet) content stops stretching edge to edge and
+          centres as a phone-width column instead. */}
+      <View style={styles.webColumn}>{content}</View>
     </View>
   );
 }
 
+const MAX_CONTENT_WIDTH = 480;
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  webColumn: {
+    flex: 1,
+    width: "100%",
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: "center",
   },
   flex: {
     flex: 1,

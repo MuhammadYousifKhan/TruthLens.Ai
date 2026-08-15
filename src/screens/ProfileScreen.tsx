@@ -10,6 +10,7 @@ import { useBadges } from "../hooks/useBadges";
 import { useVerificationActions } from "../hooks/useVerificationActions";
 import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   BlurCard,
   Body,
@@ -19,6 +20,7 @@ import {
   FadeIn,
   GlassCard,
   Heading,
+  LanguageToggle,
   PrimaryButton,
   Screen,
   SecondaryButton,
@@ -30,6 +32,7 @@ import { colors, motion, radius, spacing } from "../theme/theme";
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
 export default function ProfileScreen({ navigation }: Props) {
+  const { t } = useLanguage();
   const { profile, loading } = useUserProfile();
   const { results } = useQuizResults();
   const { earnedIds } = useBadges();
@@ -66,6 +69,13 @@ export default function ProfileScreen({ navigation }: Props) {
       </FadeIn>
 
       <FadeIn delay={motion.stagger}>
+        <SectionLabel>{t("language.sectionLabel")}</SectionLabel>
+        <View style={styles.languageRow}>
+          <LanguageToggle />
+        </View>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 2}>
         <View style={styles.statsRow}>
           <BlurCard style={styles.statCard} tone="strong">
             <Display color={colors.primary}>{profile.xp}</Display>
@@ -80,7 +90,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger * 2}>
+      <FadeIn delay={motion.stagger * 3}>
         <SectionLabel>Verification habits</SectionLabel>
         {/* The one stat the app actually cares about, so it gets its own
             surface and a sentence rather than a bare number. */}
@@ -103,7 +113,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </GlassCard>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger * 3}>
+      <FadeIn delay={motion.stagger * 4}>
         <SectionLabel>Quiz scores</SectionLabel>
         <GlassCard style={styles.card}>
           {completedLessons.length === 0 ? (
@@ -132,7 +142,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </GlassCard>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger * 4}>
+      <FadeIn delay={motion.stagger * 5}>
         <SectionLabel>Badges</SectionLabel>
         <View style={styles.badgesStrip}>
           {badges.map((badge) => {
@@ -157,7 +167,7 @@ export default function ProfileScreen({ navigation }: Props) {
         </View>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger * 5} style={styles.actions}>
+      <FadeIn delay={motion.stagger * 6} style={styles.actions}>
         <PrimaryButton
           label="Share my MIL habits"
           onPress={() => navigation.navigate("ReportCard")}
@@ -182,6 +192,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  languageRow: {
     marginBottom: spacing.xl,
   },
   avatar: {

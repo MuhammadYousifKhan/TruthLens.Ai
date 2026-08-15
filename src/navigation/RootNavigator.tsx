@@ -4,6 +4,8 @@ import { DarkTheme, NavigationContainer, type Theme } from "@react-navigation/na
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./types";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
+import { ProfileHeaderMenu } from "../components";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -43,6 +45,7 @@ const navigationTheme: Theme = {
 
 export default function RootNavigator() {
   const { user, initializing } = useAuth();
+  const { t } = useLanguage();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
@@ -93,9 +96,14 @@ export default function RootNavigator() {
             <Stack.Screen
               name="Dashboard"
               component={DashboardScreen}
-              options={{ title: "TruthLens AI", headerBackVisible: false, animation: "fade" }}
+              options={{
+                title: t("nav.dashboard"),
+                headerBackVisible: false,
+                animation: "fade",
+                headerRight: () => <ProfileHeaderMenu />,
+              }}
             />
-            <Stack.Screen name="Scan" component={ScanScreen} options={{ title: "Scan Content" }} />
+            <Stack.Screen name="Scan" component={ScanScreen} options={{ title: t("nav.scan") }} />
             <Stack.Screen
               name="Analyzing"
               component={AnalyzingScreen}
@@ -106,26 +114,26 @@ export default function RootNavigator() {
             <Stack.Screen
               name="Result"
               component={ResultScreen}
-              options={{ title: "Result", animation: "fade_from_bottom" }}
+              options={{ title: t("nav.result"), animation: "fade_from_bottom" }}
             />
             <Stack.Screen
               name="Guide"
               component={GuideScreen}
-              options={{ title: "Fact-Checking Guide" }}
+              options={{ title: t("nav.guide") }}
             />
             <Stack.Screen
               name="Pause"
               component={PauseScreen}
               // Rises from the bottom like a sheet — it interrupts the share,
               // so it should feel like it landed on top of the flow.
-              options={{ title: "Think Before You Share", animation: "slide_from_bottom" }}
+              options={{ title: t("nav.pause"), animation: "slide_from_bottom" }}
             />
             <Stack.Screen
               name="DeepfakeHelp"
               component={DeepfakeHelpScreen}
-              options={{ title: "If It's a Deepfake" }}
+              options={{ title: t("nav.deepfakeHelp") }}
             />
-            <Stack.Screen name="Game" component={GameScreen} options={{ title: "Spot the Fake" }} />
+            <Stack.Screen name="Game" component={GameScreen} options={{ title: t("nav.game") }} />
             <Stack.Screen name="Learn" component={LearnHubScreen} options={{ title: "Learn Hub" }} />
             <Stack.Screen
               name="LessonDetail"
