@@ -5,6 +5,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
 import { awardVerificationActionXp } from "../firebase/actions";
 import {
   Body,
@@ -27,16 +28,6 @@ type CheckId = "source" | "seenElsewhere" | "emotion";
 const COOLDOWN_MS = 2500;
 const TICK_MS = 100;
 
-const CHECKS: { id: CheckId; label: string; hint: string }[] = [
-  { id: "source", label: "Do you know the source?", hint: "Who posted it first?" },
-  { id: "seenElsewhere", label: "Have you seen it elsewhere?", hint: "One outlet is not enough" },
-  {
-    id: "emotion",
-    label: "Does it make you feel a strong emotion?",
-    hint: "Outrage travels faster than truth",
-  },
-];
-
 /**
  * The friction screen.
  *
@@ -49,7 +40,14 @@ const CHECKS: { id: CheckId; label: string; hint: string }[] = [
 export default function PauseScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
   const { user } = useAuth();
+  const { t } = useLanguage();
   const hasImage = Boolean(imageUri);
+
+  const CHECKS: { id: CheckId; label: string; hint: string }[] = [
+    { id: "source", label: t("pause.check1Label"), hint: t("pause.check1Hint") },
+    { id: "seenElsewhere", label: t("pause.check2Label"), hint: t("pause.check2Hint") },
+    { id: "emotion", label: t("pause.check3Label"), hint: t("pause.check3Hint") },
+  ];
 
   const [checks, setChecks] = useState<Record<CheckId, boolean>>({
     source: false,
@@ -97,9 +95,9 @@ export default function PauseScreen({ navigation, route }: Props) {
         <View style={styles.kickerChip}>
           <MaterialIcons name="pause-circle-outline" size={26} color={colors.warning} />
         </View>
-        <Heading style={styles.title}>Pause.</Heading>
+        <Heading style={styles.title}>{t("pause.title")}</Heading>
         <Body muted style={styles.lede}>
-          Three quick checks before this leaves your hands.
+          {t("pause.lede")}
         </Body>
       </FadeIn>
 
@@ -141,11 +139,10 @@ export default function PauseScreen({ navigation, route }: Props) {
         {/* Verifying is the primary action here, not sharing. The visual
             hierarchy has to agree with what the screen is asking for. */}
         <PrimaryButton
-          label="I'll verify first"
+          label={t("pause.verifyFirst")}
           onPress={verifyFirst}
           icon="fact-check"
           style={styles.action}
-          accessibilityHint="Opens the fact-checking checklist"
         />
 
         {hasImage ? (
@@ -156,15 +153,15 @@ export default function PauseScreen({ navigation, route }: Props) {
                   value={elapsed / COOLDOWN_MS}
                   tone={colors.textMuted}
                   height={4}
-                  accessibilityLabel="Share unlocks in a moment"
+                  accessibilityLabel={t("pause.cooldownNote")}
                 />
                 <Caption center style={styles.cooldownNote}>
-                  Take a breath — sharing unlocks in a moment
+                  {t("pause.cooldownNote")}
                 </Caption>
               </View>
             )}
             <SecondaryButton
-              label={canShare ? "Share anyway" : "Waiting…"}
+              label={canShare ? t("pause.shareAnyway") : t("pause.waiting")}
               onPress={shareAnyway}
               disabled={!canShare}
               icon="ios-share"
@@ -174,11 +171,9 @@ export default function PauseScreen({ navigation, route }: Props) {
         ) : (
           <GlassCard style={styles.practiceNote} tone="sunken" highlight={false}>
             <MaterialIcons name="science" size={18} color={colors.textMuted} />
-            <Caption style={styles.practiceText}>
-              Practice mode — scan an image first to actually share it.
-            </Caption>
+            <Caption style={styles.practiceText}>{t("pause.practiceNote")}</Caption>
             <SecondaryButton
-              label="Scan an image"
+              label={t("pause.scanAnImage")}
               onPress={() => navigation.navigate("Scan")}
               icon="document-scanner"
               style={styles.practiceButton}

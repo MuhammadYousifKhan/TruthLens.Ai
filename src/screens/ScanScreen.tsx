@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   Body,
   Caption,
@@ -20,6 +21,7 @@ import { absoluteFill, colors, motion, radius, spacing } from "../theme/theme";
 type Props = NativeStackScreenProps<RootStackParamList, "Scan">;
 
 export default function ScanScreen({ navigation }: Props) {
+  const { t } = useLanguage();
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   async function pickImage() {
@@ -49,18 +51,18 @@ export default function ScanScreen({ navigation }: Props) {
       {!imageUri ? (
         <FadeIn>
           <Title center style={styles.prompt}>
-            What are you checking?
+            {t("scan.prompt")}
           </Title>
           <Body muted center style={styles.lede}>
-            Upload a photo or a screenshot from your feed.
+            {t("scan.lede")}
           </Body>
 
           <PressScale
             onPress={pickImage}
             scaleTo={0.98}
             accessibilityRole="button"
-            accessibilityLabel="Upload an image"
-            accessibilityHint="Opens your photo library to pick an image to scan"
+            accessibilityLabel={t("scan.dropLabel")}
+            accessibilityHint={t("scan.dropHint")}
           >
             {/* Dashed edge is the one place a border does semantic work: it
                 marks a slot waiting to be filled rather than a filled card. */}
@@ -69,9 +71,9 @@ export default function ScanScreen({ navigation }: Props) {
                 <MaterialIcons name="add-photo-alternate" size={32} color={colors.primary} />
               </View>
               <Body center style={styles.dropLabel}>
-                Tap to upload an image
+                {t("scan.dropLabel")}
               </Body>
-              <Caption center>JPG or PNG, from your library</Caption>
+              <Caption center>{t("scan.dropHint")}</Caption>
             </GlassCard>
           </PressScale>
         </FadeIn>
@@ -86,13 +88,12 @@ export default function ScanScreen({ navigation }: Props) {
 
           <FadeIn delay={motion.stagger}>
             <PrimaryButton
-              label="Analyze image"
+              label={t("scan.analyze")}
               onPress={analyze}
               icon="auto-awesome"
               style={styles.analyze}
-              accessibilityHint="Runs the AI detector on this image"
             />
-            <GhostButton label="Choose a different image" onPress={pickImage} icon="swap-horiz" />
+            <GhostButton label={t("scan.chooseDifferent")} onPress={pickImage} icon="swap-horiz" />
           </FadeIn>
         </FadeIn>
       )}

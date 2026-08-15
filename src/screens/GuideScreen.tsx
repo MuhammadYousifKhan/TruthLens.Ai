@@ -7,6 +7,7 @@ import type { RootStackParamList } from "../navigation/types";
 import { guideSteps } from "../data/guideSteps";
 import { factCheckSources } from "../data/factCheckSources";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
 import { awardVerificationActionXp } from "../firebase/actions";
 import {
   Body,
@@ -62,6 +63,7 @@ function ToolButton({
 export default function GuideScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   const doneCount = guideSteps.filter((_, index) => checked[index]).length;
@@ -99,9 +101,9 @@ export default function GuideScreen({ navigation, route }: Props) {
           something with an end in sight. */}
       <FadeIn>
         <View style={styles.progressRow}>
-          <Caption>Verification checklist</Caption>
+          <Caption>{t("guide.checklistLabel")}</Caption>
           <Caption color={doneCount === guideSteps.length ? colors.success : colors.textMuted}>
-            {doneCount} of {guideSteps.length} done
+            {t("guide.doneCount", { done: doneCount, total: guideSteps.length })}
           </Caption>
         </View>
         <Meter
@@ -109,12 +111,14 @@ export default function GuideScreen({ navigation, route }: Props) {
           tone={doneCount === guideSteps.length ? colors.success : colors.primary}
           height={6}
           style={styles.progressMeter}
-          accessibilityLabel={`${doneCount} of ${guideSteps.length} steps completed`}
+          accessibilityLabel={t("guide.doneCount", { done: doneCount, total: guideSteps.length })}
         />
       </FadeIn>
 
       {guideSteps.map((step, index) => {
         const isChecked = Boolean(checked[index]);
+        const title = t(`guide.steps.${index}.title`);
+        const body = t(`guide.steps.${index}.body`);
         return (
           <FadeIn key={step.title} delay={motion.stagger * (1 + index)}>
             <GlassCard
@@ -124,7 +128,7 @@ export default function GuideScreen({ navigation, route }: Props) {
               <PressScale
                 onPress={() => toggle(index)}
                 accessibilityRole="checkbox"
-                accessibilityLabel={step.title}
+                accessibilityLabel={title}
                 accessibilityState={{ checked: isChecked }}
                 style={styles.stepHeader}
               >
@@ -138,30 +142,30 @@ export default function GuideScreen({ navigation, route }: Props) {
                     <MaterialIcons name="check" size={16} color={colors.background} />
                   )}
                 </View>
-                <BodyStrong style={styles.stepTitle}>{step.title}</BodyStrong>
+                <BodyStrong style={styles.stepTitle}>{title}</BodyStrong>
               </PressScale>
 
               <Body muted style={styles.stepBody}>
-                {step.body}
+                {body}
               </Body>
 
               {index === REVERSE_SEARCH_STEP && (
                 <View style={styles.toolRow}>
                   <ToolButton
-                    label="TinEye"
+                    label={t("guide.toolTineye")}
                     icon="search"
                     onPress={() => openReverseSearch("tineye")}
                     disabled={!imageUrl}
                   />
                   <ToolButton
-                    label="Google Lens"
+                    label={t("guide.toolLens")}
                     icon="image-search"
                     onPress={() => openReverseSearch("lens")}
                     disabled={!imageUrl}
                   />
                   {!imageUrl && (
                     <Caption color={colors.placeholder} style={styles.disabledNote}>
-                      Reverse image search needs the photo to finish uploading — try a fresh scan.
+                      {t("guide.toolDisabledNote")}
                     </Caption>
                   )}
                 </View>
@@ -186,7 +190,7 @@ export default function GuideScreen({ navigation, route }: Props) {
 
       <FadeIn delay={motion.stagger * (1 + guideSteps.length)}>
         <PrimaryButton
-          label="Continue"
+          label={t("guide.continue")}
           onPress={handleContinue}
           icon="arrow-forward"
           iconTrailing

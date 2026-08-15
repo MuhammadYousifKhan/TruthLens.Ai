@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { createUserDocument } from "../firebase/users";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   BlurCard,
   Body,
@@ -16,6 +17,7 @@ import {
   GhostButton,
   GlassInput,
   Heading,
+  LanguageToggle,
   PrimaryButton,
   Screen,
 } from "../components";
@@ -24,33 +26,35 @@ import { colors, motion, radius, spacing } from "../theme/theme";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Mode = "login" | "signup";
+type FieldErrorId = "name" | "email" | "password";
 
-function friendlyAuthError(code: string): string {
+function friendlyAuthError(code: string, t: (key: string) => string): string {
   switch (code) {
     case "auth/invalid-email":
-      return "That email address doesn't look right.";
+      return t("login.errorInvalidEmail");
     case "auth/user-not-found":
-      return "No account found with that email.";
+      return t("login.errorUserNotFound");
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Incorrect email or password.";
+      return t("login.errorWrongPassword");
     case "auth/email-already-in-use":
-      return "An account already exists with that email.";
+      return t("login.errorEmailInUse");
     case "auth/weak-password":
-      return "Password should be at least 6 characters.";
+      return t("login.errorWeakPassword");
     case "auth/network-request-failed":
-      return "Check your connection and try again.";
+      return t("login.errorNetworkFailed");
     default:
-      return "Something went wrong. Please try again.";
+      return t("login.errorGeneric");
   }
 }
 
 export default function LoginScreen() {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<FieldErrorId | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -58,15 +62,15 @@ export default function LoginScreen() {
 
   function validate(): boolean {
     if (isSignup && name.trim().length === 0) {
-      setFieldError("Enter your name.");
+      setFieldError("name");
       return false;
     }
     if (!EMAIL_REGEX.test(email.trim())) {
-      setFieldError("Enter a valid email address.");
+      setFieldError("email");
       return false;
     }
     if (password.length < 6) {
-      setFieldError("Password must be at least 6 characters.");
+      setFieldError("password");
       return false;
     }
     setFieldError(null);
@@ -89,7 +93,7 @@ export default function LoginScreen() {
       // AuthContext picks up the resulting auth-state change and RootNavigator
       // switches to the signed-in stack automatically.
     } catch (err: any) {
-      setSubmitError(friendlyAuthError(err?.code ?? ""));
+      setSubmitError(friendlyAuthError(err?.code ?? "", t));
     } finally {
       setLoading(false);
     }
@@ -103,23 +107,25 @@ export default function LoginScreen() {
 
   // The first field is the only one that can hold a validation error at a
   // time, so the message renders under whichever field failed.
-  const nameError = fieldError?.startsWith("Enter your name") ? fieldError : null;
-  const emailError = fieldError?.startsWith("Enter a valid email") ? fieldError : null;
-  const passwordError = fieldError?.startsWith("Password must") ? fieldError : null;
+  const nameError = fieldError === "name" ? t("login.nameRequired") : null;
+  const emailError = fieldError === "email" ? t("login.emailInvalid") : null;
+  const passwordError = fieldError === "password" ? t("login.passwordTooShort") : null;
 
   return (
     <Screen scroll center avoidKeyboard>
+      <View style={styles.languageRow}>
+        <LanguageToggle />
+      </View>
+
       <FadeIn>
         <View style={styles.brandRow}>
           <View style={styles.mark}>
             <MaterialIcons name="center-focus-strong" size={26} color={colors.primary} />
           </View>
-          <Heading>TruthLens AI</Heading>
+          <Heading>{t("login.brand")}</Heading>
         </View>
         <Body muted style={styles.lede}>
-          {isSignup
-            ? "Build the habit of checking before you share."
-            : "Welcome back — let's keep that streak going."}
+          {isSignup ? t("login.ledeSignup") : t("login.ledeLogin")}
         </Body>
       </FadeIn>
 
@@ -129,20 +135,20 @@ export default function LoginScreen() {
           {isSignup && (
             <GlassInput
               icon="person-outline"
-              placeholder="Name"
+              placeholder={t("login.namePlaceholder")}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
               autoComplete="name"
               error={nameError}
               containerStyle={styles.field}
-              accessibilityLabel="Name"
+              accessibilityLabel={t("login.namePlaceholder")}
             />
           )}
 
           <GlassInput
             icon="alternate-email"
-            placeholder="Email"
+            placeholder={t("login.emailPlaceholder")}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -150,19 +156,19 @@ export default function LoginScreen() {
             autoComplete="email"
             error={emailError}
             containerStyle={styles.field}
-            accessibilityLabel="Email"
+            accessibilityLabel={t("login.emailPlaceholder")}
           />
 
           <GlassInput
             icon="lock-outline"
-            placeholder="Password"
+            placeholder={t("login.passwordPlaceholder")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
             error={passwordError}
             containerStyle={styles.field}
-            accessibilityLabel="Password"
+            accessibilityLabel={t("login.passwordPlaceholder")}
           />
 
           {submitError && (
@@ -175,7 +181,7 @@ export default function LoginScreen() {
           )}
 
           <PrimaryButton
-            label={isSignup ? "Create account" : "Log in"}
+            label={isSignup ? t("login.createAccount") : t("login.logIn")}
             onPress={handleSubmit}
             loading={loading}
             icon="arrow-forward"
@@ -184,7 +190,7 @@ export default function LoginScreen() {
           />
 
           <GhostButton
-            label={isSignup ? "Already have an account? Log in" : "New here? Create an account"}
+            label={isSignup ? t("login.toggleToLogin") : t("login.toggleToSignup")}
             onPress={toggleMode}
             disabled={loading}
           />
@@ -195,6 +201,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  languageRow: {
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",

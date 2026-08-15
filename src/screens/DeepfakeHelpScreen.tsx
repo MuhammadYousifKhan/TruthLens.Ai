@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { MaterialIcons } from "@expo/vector-icons";
 import { deepfakeResponseSteps } from "../data/deepfakeResponseSteps";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   Body,
   BodyStrong,
@@ -24,6 +25,7 @@ import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
  * alarming someone who is already alarmed does not help them act.
  */
 export default function DeepfakeHelpScreen() {
+  const { t } = useLanguage();
   return (
     <Screen scroll>
       <FadeIn>
@@ -31,13 +33,9 @@ export default function DeepfakeHelpScreen() {
           <View style={styles.introChip}>
             <MaterialIcons name="shield" size={24} color={colors.danger} />
           </View>
-          <Subtitle style={styles.introText}>
-            Here's what to do in the first few minutes.
-          </Subtitle>
+          <Subtitle style={styles.introText}>{t("deepfakeHelp.intro")}</Subtitle>
         </View>
-        <Caption style={styles.reassurance}>
-          Work through these in order. You don't have to do all of them at once.
-        </Caption>
+        <Caption style={styles.reassurance}>{t("deepfakeHelp.reassurance")}</Caption>
       </FadeIn>
 
       {deepfakeResponseSteps.map((step, index) => (
@@ -47,11 +45,13 @@ export default function DeepfakeHelpScreen() {
               <View style={styles.stepBadge}>
                 <BodyStrong color={colors.primary}>{index + 1}</BodyStrong>
               </View>
-              <BodyStrong style={styles.stepTitle}>{step.title}</BodyStrong>
+              <BodyStrong style={styles.stepTitle}>
+                {t(`deepfakeHelp.steps.${index}.title`)}
+              </BodyStrong>
             </View>
 
             <Body muted style={styles.stepBody}>
-              {step.body}
+              {t(`deepfakeHelp.steps.${index}.body`)}
             </Body>
 
             {step.actions && (

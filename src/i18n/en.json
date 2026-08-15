@@ -1,0 +1,196 @@
+{
+  "language": {
+    "toggleLabel": "EN",
+    "english": "English",
+    "urdu": "اردو",
+    "sectionLabel": "Language"
+  },
+  "login": {
+    "brand": "TruthLens AI",
+    "ledeSignup": "Build the habit of checking before you share.",
+    "ledeLogin": "Welcome back — let's keep that streak going.",
+    "namePlaceholder": "Name",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "createAccount": "Create account",
+    "logIn": "Log in",
+    "toggleToLogin": "Already have an account? Log in",
+    "toggleToSignup": "New here? Create an account",
+    "nameRequired": "Enter your name.",
+    "emailInvalid": "Enter a valid email address.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "errorInvalidEmail": "That email address doesn't look right.",
+    "errorUserNotFound": "No account found with that email.",
+    "errorWrongPassword": "Incorrect email or password.",
+    "errorEmailInUse": "An account already exists with that email.",
+    "errorWeakPassword": "Password should be at least 6 characters.",
+    "errorNetworkFailed": "Check your connection and try again.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "headerMenu": {
+    "profileSettings": "Profile settings",
+    "language": "Language",
+    "logout": "Log out"
+  },
+  "nav": {
+    "dashboard": "TruthLens AI",
+    "scan": "Scan Content",
+    "result": "Result",
+    "guide": "Fact-Checking Guide",
+    "pause": "Think Before You Share",
+    "deepfakeHelp": "If It's a Deepfake",
+    "game": "Spot the Fake"
+  },
+  "dashboard": {
+    "loading": "Loading",
+    "welcomeBack": "Welcome back",
+    "greeting": "Hi, {{name}}",
+    "scanTitle": "Scan content",
+    "scanSubtitle": "Check if an image is real before you share it",
+    "pauseTitle": "Think before you share",
+    "pauseHint": "Run the five-second check",
+    "sectionBuildHabit": "Build the habit",
+    "cardLearnLabel": "Learn",
+    "cardLearnHint": "Short lessons",
+    "cardQuizLabel": "Quiz",
+    "cardQuizHint": "Test yourself",
+    "cardGameLabel": "Spot the fake",
+    "cardGameHint": "Train your eye",
+    "cardAchievementsLabel": "Achievements",
+    "cardAchievementsHint": "Your badges",
+    "cardProfileLabel": "Profile",
+    "cardProfileHint": "Scans & stats",
+    "cardDeepfakeLabel": "If it's a deepfake",
+    "cardDeepfakeHint": "Get support"
+  },
+  "scan": {
+    "prompt": "What are you checking?",
+    "lede": "Upload a photo or a screenshot from your feed.",
+    "dropLabel": "Tap to upload an image",
+    "dropHint": "JPG or PNG, from your library",
+    "analyze": "Analyze image",
+    "chooseDifferent": "Choose a different image"
+  },
+  "analyzing": {
+    "heading": "Checking this image",
+    "subheading": "Usually takes a few seconds",
+    "stage1Label": "Uploading image",
+    "stage1Detail": "Securing your copy",
+    "stage2Label": "Analyzing with an AI detector",
+    "stage2Detail": "Looking for generation artefacts",
+    "stage3Label": "Saving your result",
+    "stage3Detail": "Adding it to your history"
+  },
+  "result": {
+    "verdictHighShort": "Likely fake",
+    "verdictHighLabel": "Likely AI-generated",
+    "verdictMidShort": "Uncertain",
+    "verdictMidLabel": "Uncertain — verify before sharing",
+    "verdictLowShort": "Likely real",
+    "verdictLowLabel": "Likely authentic",
+    "estimatedPill": "{{pct}}% estimated",
+    "confidencePill": "{{pct}}% confidence",
+    "modelPill": "Model",
+    "offlinePill": "Offline estimate",
+    "disclaimer": "This is an estimate, not proof. Always verify before sharing.",
+    "sourceModel": "Analyzed by an open detection model (probabilistic).",
+    "sourceOffline": "Offline estimate — verify manually.",
+    "whatToLookAt": "What to look at",
+    "signals": "Signals",
+    "whatThisMeans": "What this means",
+    "deepfakeCta": "Is this a deepfake of someone you know?",
+    "learnHow": "Learn how to verify this",
+    "share": "Share",
+    "scanAnother": "Scan another image"
+  },
+  "guide": {
+    "checklistLabel": "Verification checklist",
+    "doneCount": "{{done}} of {{total}} done",
+    "toolTineye": "TinEye",
+    "toolLens": "Google Lens",
+    "toolDisabledNote": "Reverse image search needs the photo to finish uploading — try a fresh scan.",
+    "continue": "Continue",
+    "steps": [
+      {
+        "title": "Check the source",
+        "body": "Look at who posted the content first. Is it a verified account, a known news outlet, or an anonymous page? Unverified or brand-new accounts are a red flag."
+      },
+      {
+        "title": "Reverse image search",
+        "body": "Search the image on Google Images or TinEye to see where else it has appeared. If it shows up in unrelated stories or much older posts, treat it with suspicion."
+      },
+      {
+        "title": "Verify the date",
+        "body": "Old photos and videos are often recirculated out of context to look like breaking news. Check when the content was first published before reacting to it."
+      },
+      {
+        "title": "Cross-check with trusted sources",
+        "body": "See if established, reputable outlets are reporting the same thing. If only one obscure source has the story, wait for confirmation before trusting it."
+      },
+      {
+        "title": "Decide whether to share",
+        "body": "If you're still unsure after checking the source, searching the image, and verifying the date, don't share it. When in doubt, sit it out."
+      }
+    ]
+  },
+  "pause": {
+    "title": "Pause.",
+    "lede": "Three quick checks before this leaves your hands.",
+    "check1Label": "Do you know the source?",
+    "check1Hint": "Who posted it first?",
+    "check2Label": "Have you seen it elsewhere?",
+    "check2Hint": "One outlet is not enough",
+    "check3Label": "Does it make you feel a strong emotion?",
+    "check3Hint": "Outrage travels faster than truth",
+    "verifyFirst": "I'll verify first",
+    "shareAnyway": "Share anyway",
+    "waiting": "Waiting…",
+    "cooldownNote": "Take a breath — sharing unlocks in a moment",
+    "practiceNote": "Practice mode — scan an image first to actually share it.",
+    "scanAnImage": "Scan an image"
+  },
+  "deepfakeHelp": {
+    "intro": "Here's what to do in the first few minutes.",
+    "reassurance": "Work through these in order. You don't have to do all of them at once.",
+    "steps": [
+      {
+        "title": "Stop",
+        "body": "Don't share, forward, or screenshot it further. Even sharing it to warn others can spread the harm and make it harder to get removed."
+      },
+      {
+        "title": "Save evidence",
+        "body": "Take a screenshot and save the link or URL before it disappears. You'll need this if you report it or ask an adult for help."
+      },
+      {
+        "title": "Report it",
+        "body": "Report the content directly to the platform it's on — most platforms remove non-consensual or deepfake content quickly once reported."
+      },
+      {
+        "title": "Tell someone you trust",
+        "body": "A parent, teacher, school counselor, or other trusted adult can help you take the next steps. You don't have to handle this alone."
+      },
+      {
+        "title": "It is not your fault",
+        "body": "Being targeted by a deepfake is not something you caused. The responsibility is entirely on the person who made or shared it."
+      }
+    ]
+  },
+  "game": {
+    "comingSoonTitle": "Coming soon",
+    "comingSoonBody": "Game images haven't been added yet — check back once they're bundled in.",
+    "backToDashboard": "Back to dashboard",
+    "roundComplete": "Round complete",
+    "bestStreak": "Best streak {{n}}",
+    "playAgain": "Play again",
+    "real": "Real",
+    "ai": "AI",
+    "correct": "Correct",
+    "notQuite": "Not quite",
+    "aiGenerated": "AI-generated",
+    "realPhoto": "Real photo",
+    "nextImage": "Next image",
+    "seeResults": "See results",
+    "streakInARow": "{{n}} in a row",
+    "ofCount": "{{current}} of {{total}}"
+  }
+}

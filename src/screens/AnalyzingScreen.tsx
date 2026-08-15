@@ -14,6 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
 import { analyzeImage } from "../utils/detector";
 import { uploadScanImageAsync } from "../firebase/storage";
 import { saveScanAndAwardXp } from "../firebase/scans";
@@ -32,12 +33,6 @@ import { absoluteFill, colors, radius, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Analyzing">;
 
-const STAGES = [
-  { label: "Uploading image", detail: "Securing your copy" },
-  { label: "Analyzing with an AI detector", detail: "Looking for generation artefacts" },
-  { label: "Saving your result", detail: "Adding it to your history" },
-];
-
 /**
  * The waiting screen.
  *
@@ -49,6 +44,12 @@ const STAGES = [
 export default function AnalyzingScreen({ navigation, route }: Props) {
   const { imageUri } = route.params;
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const STAGES = [
+    { label: t("analyzing.stage1Label"), detail: t("analyzing.stage1Detail") },
+    { label: t("analyzing.stage2Label"), detail: t("analyzing.stage2Detail") },
+    { label: t("analyzing.stage3Label"), detail: t("analyzing.stage3Detail") },
+  ];
   const [stageIndex, setStageIndex] = useState(0);
   const started = useRef(false);
   const reducedMotion = useReducedMotion();
@@ -155,10 +156,10 @@ export default function AnalyzingScreen({ navigation, route }: Props) {
         </View>
 
         <Title center style={styles.heading}>
-          Checking this image
+          {t("analyzing.heading")}
         </Title>
         <Caption center style={styles.subheading}>
-          Usually takes a few seconds
+          {t("analyzing.subheading")}
         </Caption>
 
         <GlassCard style={styles.stages}>

@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   BlurCard,
   Body,
@@ -23,8 +24,8 @@ type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
 
 type DashboardCard = {
   key: string;
-  label: string;
-  hint: string;
+  labelKey: string;
+  hintKey: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   /** Each destination owns a hue, so the grid is scannable by colour as well
    *  as by label once the user knows the app. */
@@ -35,48 +36,40 @@ type DashboardCard = {
 const secondaryCards: DashboardCard[] = [
   {
     key: "Learn",
-    label: "Learn",
-    hint: "Short lessons",
+    labelKey: "dashboard.cardLearnLabel",
+    hintKey: "dashboard.cardLearnHint",
     icon: "school",
     tone: colors.secondary,
     onPress: (nav) => nav.navigate("Learn"),
   },
   {
     key: "Quiz",
-    label: "Quiz",
-    hint: "Test yourself",
+    labelKey: "dashboard.cardQuizLabel",
+    hintKey: "dashboard.cardQuizHint",
     icon: "quiz",
     tone: colors.secondary,
     onPress: (nav) => nav.navigate("Learn"),
   },
   {
     key: "Game",
-    label: "Spot the fake",
-    hint: "Train your eye",
+    labelKey: "dashboard.cardGameLabel",
+    hintKey: "dashboard.cardGameHint",
     icon: "visibility",
     tone: colors.primary,
     onPress: (nav) => nav.navigate("Game"),
   },
   {
     key: "Achievements",
-    label: "Achievements",
-    hint: "Your badges",
+    labelKey: "dashboard.cardAchievementsLabel",
+    hintKey: "dashboard.cardAchievementsHint",
     icon: "emoji-events",
     tone: colors.warning,
     onPress: (nav) => nav.navigate("Achievements"),
   },
   {
-    key: "Profile",
-    label: "Profile",
-    hint: "Scans & stats",
-    icon: "person",
-    tone: colors.info,
-    onPress: (nav) => nav.navigate("Profile"),
-  },
-  {
     key: "DeepfakeHelp",
-    label: "If it's a deepfake",
-    hint: "Get support",
+    labelKey: "dashboard.cardDeepfakeLabel",
+    hintKey: "dashboard.cardDeepfakeHint",
     icon: "shield",
     tone: colors.danger,
     onPress: (nav) => nav.navigate("DeepfakeHelp"),
@@ -85,6 +78,7 @@ const secondaryCards: DashboardCard[] = [
 
 export default function DashboardScreen({ navigation }: Props) {
   const { profile, loading } = useUserProfile();
+  const { t } = useLanguage();
 
   const greetingName = loading ? "" : profile?.name?.split(" ")[0] || "there";
   const xp = profile?.xp ?? 0;
@@ -94,8 +88,10 @@ export default function DashboardScreen({ navigation }: Props) {
       <FadeIn>
         <View style={styles.header}>
           <View style={styles.greetingBlock}>
-            <Caption>{loading ? "Loading" : "Welcome back"}</Caption>
-            <Title style={styles.greeting}>{loading ? " " : `Hi, ${greetingName}`}</Title>
+            <Caption>{loading ? t("dashboard.loading") : t("dashboard.welcomeBack")}</Caption>
+            <Title style={styles.greeting}>
+              {loading ? " " : t("dashboard.greeting", { name: greetingName })}
+            </Title>
           </View>
 
           <BlurCard style={styles.xpPill} radius={radius.pill} highlight={false} tone="strong">
@@ -112,8 +108,8 @@ export default function DashboardScreen({ navigation }: Props) {
           onPress={() => navigation.navigate("Scan")}
           scaleTo={0.98}
           accessibilityRole="button"
-          accessibilityLabel="Scan content"
-          accessibilityHint="Check whether an image is AI-generated before you share it"
+          accessibilityLabel={t("dashboard.scanTitle")}
+          accessibilityHint={t("dashboard.scanSubtitle")}
           style={styles.scanCard}
         >
           <LinearGradient
@@ -126,9 +122,9 @@ export default function DashboardScreen({ navigation }: Props) {
             <MaterialIcons name="document-scanner" size={28} color={colors.onPrimary} />
           </View>
           <View style={styles.scanCopy}>
-            <Title color={colors.onPrimary}>Scan content</Title>
+            <Title color={colors.onPrimary}>{t("dashboard.scanTitle")}</Title>
             <Body color={colors.onPrimary} style={styles.scanSubtitle}>
-              Check if an image is real before you share it
+              {t("dashboard.scanSubtitle")}
             </Body>
           </View>
           <MaterialIcons name="arrow-forward" size={22} color={colors.onPrimary} />
@@ -139,7 +135,7 @@ export default function DashboardScreen({ navigation }: Props) {
         <PressScale
           onPress={() => navigation.navigate("Pause")}
           accessibilityRole="button"
-          accessibilityLabel="Think before you share"
+          accessibilityLabel={t("dashboard.pauseTitle")}
           style={styles.pauseWrapper}
         >
           <GlassCard style={styles.pauseCard} accent={colors.warning}>
@@ -147,8 +143,8 @@ export default function DashboardScreen({ navigation }: Props) {
               <MaterialIcons name="pause-circle-outline" size={22} color={colors.warning} />
             </View>
             <View style={styles.pauseCopy}>
-              <Subtitle>Think before you share</Subtitle>
-              <Caption>Run the five-second check</Caption>
+              <Subtitle>{t("dashboard.pauseTitle")}</Subtitle>
+              <Caption>{t("dashboard.pauseHint")}</Caption>
             </View>
             <MaterialIcons name="chevron-right" size={22} color={colors.textFaint} />
           </GlassCard>
@@ -156,36 +152,40 @@ export default function DashboardScreen({ navigation }: Props) {
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 3}>
-        <SectionLabel>Build the habit</SectionLabel>
+        <SectionLabel>{t("dashboard.sectionBuildHabit")}</SectionLabel>
       </FadeIn>
 
       <View style={styles.grid}>
-        {secondaryCards.map((card, index) => (
-          <FadeIn
-            key={card.key}
-            delay={motion.stagger * (4 + index)}
-            style={styles.gridItem}
-          >
-            <PressScale
-              onPress={() => card.onPress(navigation)}
-              accessibilityRole="button"
-              accessibilityLabel={card.label}
-              accessibilityHint={card.hint}
-              style={styles.gridPress}
+        {secondaryCards.map((card, index) => {
+          const label = t(card.labelKey);
+          const hint = t(card.hintKey);
+          return (
+            <FadeIn
+              key={card.key}
+              delay={motion.stagger * (4 + index)}
+              style={styles.gridItem}
             >
-              <GlassCard style={styles.gridCard}>
-                <View style={[styles.iconChip, { borderColor: card.tone + "55" }]}>
-                  <View
-                    style={[StyleSheet.absoluteFill, { backgroundColor: card.tone, opacity: 0.12 }]}
-                  />
-                  <MaterialIcons name={card.icon} size={22} color={card.tone} />
-                </View>
-                <Subtitle style={styles.gridLabel}>{card.label}</Subtitle>
-                <Caption>{card.hint}</Caption>
-              </GlassCard>
-            </PressScale>
-          </FadeIn>
-        ))}
+              <PressScale
+                onPress={() => card.onPress(navigation)}
+                accessibilityRole="button"
+                accessibilityLabel={label}
+                accessibilityHint={hint}
+                style={styles.gridPress}
+              >
+                <GlassCard style={styles.gridCard}>
+                  <View style={[styles.iconChip, { borderColor: card.tone + "55" }]}>
+                    <View
+                      style={[StyleSheet.absoluteFill, { backgroundColor: card.tone, opacity: 0.12 }]}
+                    />
+                    <MaterialIcons name={card.icon} size={22} color={card.tone} />
+                  </View>
+                  <Subtitle style={styles.gridLabel}>{label}</Subtitle>
+                  <Caption>{hint}</Caption>
+                </GlassCard>
+              </PressScale>
+            </FadeIn>
+          );
+        })}
       </View>
     </Screen>
   );

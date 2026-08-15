@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { gameItems } from "../data/gameItems";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
 import { saveGameResult } from "../firebase/gameResults";
 import { checkAndAwardBadges } from "../firebase/badges";
 import { showBadgeUnlockAlert } from "../utils/badgeAlert";
@@ -41,6 +42,7 @@ function shuffled<T>(arr: T[]): T[] {
 
 export default function GameScreen({ navigation }: Props) {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [items, setItems] = useState(() => shuffled(gameItems));
   const [index, setIndex] = useState(0);
   const [guess, setGuess] = useState<Guess | null>(null);
@@ -102,12 +104,12 @@ export default function GameScreen({ navigation }: Props) {
         <FadeIn>
           <GlassCard style={styles.emptyCard}>
             <MaterialIcons name="hourglass-empty" size={32} color={colors.textFaint} />
-            <Title center>Coming soon</Title>
+            <Title center>{t("game.comingSoonTitle")}</Title>
             <Body muted center>
-              Game images haven't been added yet — check back once they're bundled in.
+              {t("game.comingSoonBody")}
             </Body>
             <PrimaryButton
-              label="Back to dashboard"
+              label={t("game.backToDashboard")}
               onPress={() => navigation.navigate("Dashboard")}
               style={styles.emptyButton}
             />
@@ -126,7 +128,7 @@ export default function GameScreen({ navigation }: Props) {
             <View style={styles.trophy}>
               <MaterialIcons name="visibility" size={30} color={colors.primary} />
             </View>
-            <Caption center>Round complete</Caption>
+            <Caption center>{t("game.roundComplete")}</Caption>
             <Hero center color={colors.primary} style={styles.resultScore}>
               {score}/{items.length}
             </Hero>
@@ -135,23 +137,27 @@ export default function GameScreen({ navigation }: Props) {
               tone={colors.primary}
               animateIn
               style={styles.resultMeter}
-              accessibilityLabel={`Scored ${score} out of ${items.length}`}
+              accessibilityLabel={t("game.ofCount", { current: score, total: items.length })}
             />
             <View style={styles.pillRow}>
-              <Pill label={`Best streak ${bestStreak}`} icon="local-fire-department" tone={colors.warning} />
+              <Pill
+                label={t("game.bestStreak", { n: bestStreak })}
+                icon="local-fire-department"
+                tone={colors.warning}
+              />
             </View>
           </BlurCard>
         </FadeIn>
 
         <FadeIn delay={motion.stagger} style={styles.resultActions}>
           <PrimaryButton
-            label="Play again"
+            label={t("game.playAgain")}
             onPress={playAgain}
             icon="refresh"
             style={styles.action}
           />
           <GhostButton
-            label="Back to dashboard"
+            label={t("game.backToDashboard")}
             onPress={() => navigation.navigate("Dashboard")}
             icon="home"
           />
@@ -164,14 +170,12 @@ export default function GameScreen({ navigation }: Props) {
     <Screen scroll>
       <FadeIn>
         <View style={styles.statusRow}>
-          <Caption>
-            {index + 1} of {items.length}
-          </Caption>
+          <Caption>{t("game.ofCount", { current: index + 1, total: items.length })}</Caption>
           {/* The streak only appears once it exists — an empty streak counter
               is a reminder of failure, not a motivator. */}
           {streak > 0 && (
             <Pill
-              label={`${streak} in a row`}
+              label={t("game.streakInARow", { n: streak })}
               icon="local-fire-department"
               tone={colors.warning}
             />
@@ -182,7 +186,7 @@ export default function GameScreen({ navigation }: Props) {
           tone={colors.primary}
           height={6}
           style={styles.progressMeter}
-          accessibilityLabel={`Image ${index + 1} of ${items.length}`}
+          accessibilityLabel={t("game.ofCount", { current: index + 1, total: items.length })}
         />
       </FadeIn>
 
@@ -199,26 +203,24 @@ export default function GameScreen({ navigation }: Props) {
             <PressScale
               onPress={() => makeGuess("real")}
               accessibilityRole="button"
-              accessibilityLabel="Real"
-              accessibilityHint="Guess that this photo is authentic"
+              accessibilityLabel={t("game.real")}
               style={styles.guessWrapper}
             >
               <GlassCard style={styles.guessButton} tone="strong" radius={radius.input}>
                 <MaterialIcons name="photo-camera" size={22} color={colors.text} />
-                <Subtitle>Real</Subtitle>
+                <Subtitle>{t("game.real")}</Subtitle>
               </GlassCard>
             </PressScale>
 
             <PressScale
               onPress={() => makeGuess("ai")}
               accessibilityRole="button"
-              accessibilityLabel="A I generated"
-              accessibilityHint="Guess that this image was generated by AI"
+              accessibilityLabel={t("game.ai")}
               style={styles.guessWrapper}
             >
               <GlassCard style={styles.guessButton} tone="strong" radius={radius.input}>
                 <MaterialIcons name="auto-awesome" size={22} color={colors.text} />
-                <Subtitle>AI</Subtitle>
+                <Subtitle>{t("game.ai")}</Subtitle>
               </GlassCard>
             </PressScale>
           </View>
@@ -236,18 +238,18 @@ export default function GameScreen({ navigation }: Props) {
                   color={wasCorrect ? colors.success : colors.danger}
                 />
                 <BodyStrong color={wasCorrect ? colors.success : colors.danger}>
-                  {wasCorrect ? "Correct" : "Not quite"}
+                  {wasCorrect ? t("game.correct") : t("game.notQuite")}
                 </BodyStrong>
                 <View style={styles.revealSpacer} />
-                <Caption>{item.isAI ? "AI-generated" : "Real photo"}</Caption>
+                <Caption>{item.isAI ? t("game.aiGenerated") : t("game.realPhoto")}</Caption>
               </View>
               {/* The tell is the actual lesson — it gets body weight, not
                   caption weight, because it is why the game exists. */}
-              <Body style={styles.revealTell}>{item.tell}</Body>
+              <Body style={styles.revealTell}>{language === "ur" ? item.tellUr : item.tell}</Body>
             </GlassCard>
 
             <PrimaryButton
-              label={isLast ? "See results" : "Next image"}
+              label={isLast ? t("game.seeResults") : t("game.nextImage")}
               onPress={goNext}
               icon="arrow-forward"
               iconTrailing

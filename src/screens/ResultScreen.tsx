@@ -3,6 +3,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { CommonActions } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
+import { useLanguage } from "../i18n/LanguageContext";
 import {
   BlurCard,
   Body,
@@ -32,26 +33,26 @@ type Props = NativeStackScreenProps<RootStackParamList, "Result">;
  * hedged middle band is deliberately amber rather than red: "uncertain" is a
  * real answer here, not a failure.
  */
-function verdictFor(probability: number) {
+function verdictFor(probability: number, t: (key: string) => string) {
   if (probability >= 55) {
     return {
-      label: "Likely AI-generated",
-      short: "Likely fake",
+      label: t("result.verdictHighLabel"),
+      short: t("result.verdictHighShort"),
       color: colors.danger,
       icon: "report-problem" as const,
     };
   }
   if (probability >= 35) {
     return {
-      label: "Uncertain — verify before sharing",
-      short: "Uncertain",
+      label: t("result.verdictMidLabel"),
+      short: t("result.verdictMidShort"),
       color: colors.warning,
       icon: "help-outline" as const,
     };
   }
   return {
-    label: "Likely authentic",
-    short: "Likely real",
+    label: t("result.verdictLowLabel"),
+    short: t("result.verdictLowShort"),
     color: colors.success,
     icon: "verified" as const,
   };
@@ -60,11 +61,9 @@ function verdictFor(probability: number) {
 export default function ResultScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl, probability, confidence, flags, explanation, tells, source } =
     route.params;
-  const verdict = verdictFor(probability);
-  const sourceNote =
-    source === "model"
-      ? "Analyzed by an open detection model (probabilistic)."
-      : "Offline estimate — verify manually.";
+  const { t } = useLanguage();
+  const verdict = verdictFor(probability, t);
+  const sourceNote = source === "model" ? t("result.sourceModel") : t("result.sourceOffline");
 
   function scanAnother() {
     navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Dashboard" }] }));
@@ -108,10 +107,10 @@ export default function ResultScreen({ navigation, route }: Props) {
           />
 
           <View style={styles.pillRow}>
-            <Pill label={`${probability}% estimated`} icon="percent" tone={verdict.color} />
-            <Pill label={`${confidence}% confidence`} icon="insights" tone={colors.info} />
+            <Pill label={t("result.estimatedPill", { pct: probability })} icon="percent" tone={verdict.color} />
+            <Pill label={t("result.confidencePill", { pct: confidence })} icon="insights" tone={colors.info} />
             <Pill
-              label={source === "model" ? "Model" : "Offline estimate"}
+              label={source === "model" ? t("result.modelPill") : t("result.offlinePill")}
               icon={source === "model" ? "memory" : "wifi-off"}
               tone={colors.textMuted}
             />
@@ -125,14 +124,14 @@ export default function ResultScreen({ navigation, route }: Props) {
         <GlassCard style={styles.disclaimer} tone="sunken" highlight={false}>
           <MaterialIcons name="info-outline" size={16} color={colors.textMuted} />
           <Caption style={styles.disclaimerText}>
-            This is an estimate, not proof. Always verify before sharing. {sourceNote}
+            {t("result.disclaimer")} {sourceNote}
           </Caption>
         </GlassCard>
       </FadeIn>
 
       {tells && tells.length > 0 && (
         <FadeIn delay={motion.stagger * 2}>
-          <SectionLabel>What to look at</SectionLabel>
+          <SectionLabel>{t("result.whatToLookAt")}</SectionLabel>
           <GlassCard style={styles.card}>
             {tells.map((tell, index) => (
               <View
@@ -153,7 +152,7 @@ export default function ResultScreen({ navigation, route }: Props) {
       )}
 
       <FadeIn delay={motion.stagger * 3}>
-        <SectionLabel>Signals</SectionLabel>
+        <SectionLabel>{t("result.signals")}</SectionLabel>
         <GlassCard style={styles.card}>
           {flags.map((flag, index) => (
             <View
@@ -168,7 +167,7 @@ export default function ResultScreen({ navigation, route }: Props) {
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 4}>
-        <SectionLabel>What this means</SectionLabel>
+        <SectionLabel>{t("result.whatThisMeans")}</SectionLabel>
         <GlassCard style={styles.explanationCard}>
           <Body>{explanation}</Body>
         </GlassCard>
@@ -179,13 +178,12 @@ export default function ResultScreen({ navigation, route }: Props) {
           <PressScale
             onPress={() => navigation.navigate("DeepfakeHelp")}
             accessibilityRole="button"
-            accessibilityLabel="Is this a deepfake of someone you know?"
-            accessibilityHint="Opens first-response steps for deepfake targets"
+            accessibilityLabel={t("result.deepfakeCta")}
             style={styles.deepfakeWrapper}
           >
             <GlassCard style={styles.deepfakeCard} accent={colors.danger}>
               <MaterialIcons name="shield" size={20} color={colors.danger} />
-              <Body style={styles.deepfakeText}>Is this a deepfake of someone you know?</Body>
+              <Body style={styles.deepfakeText}>{t("result.deepfakeCta")}</Body>
               <MaterialIcons name="chevron-right" size={20} color={colors.danger} />
             </GlassCard>
           </PressScale>
@@ -194,19 +192,18 @@ export default function ResultScreen({ navigation, route }: Props) {
 
       <FadeIn delay={motion.stagger * 6} style={styles.actions}>
         <PrimaryButton
-          label="Learn how to verify this"
+          label={t("result.learnHow")}
           onPress={() => navigation.navigate("Guide", { imageUri, imageUrl })}
           icon="fact-check"
           style={styles.action}
         />
         <SecondaryButton
-          label="Share"
+          label={t("result.share")}
           onPress={shareResult}
           icon="ios-share"
           style={styles.action}
-          accessibilityHint="Opens the pause-before-you-share check"
         />
-        <GhostButton label="Scan another image" onPress={scanAnother} icon="refresh" />
+        <GhostButton label={t("result.scanAnother")} onPress={scanAnother} icon="refresh" />
       </FadeIn>
     </Screen>
   );

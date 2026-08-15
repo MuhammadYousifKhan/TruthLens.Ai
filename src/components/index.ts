@@ -6,6 +6,8 @@ export { PrimaryButton, SecondaryButton, GhostButton, PressScale } from "./Butto
 export { FadeIn, Pulse } from "./Motion";
 export { Pill, Meter, SectionLabel } from "./Indicators";
 export { default as GlassInput } from "./Input";
+export { LanguageToggle } from "./LanguageToggle";
+export { ProfileHeaderMenu } from "./ProfileHeaderMenu";
 export { useReducedMotion } from "./useReducedMotion";
 export {
   Hero,
