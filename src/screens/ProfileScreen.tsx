@@ -194,10 +194,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primary + "55",
   },
-  headerCopy: {
-    flex: 1,
-    gap: spacing.xs,
-  },
+ headerCopy: {
+  flex: 1,
+  minWidth: 0,
+  gap: spacing.xs,
+},
   statsRow: {
     flexDirection: "row",
     gap: spacing.md,
@@ -218,9 +219,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   habitsText: {
-    flex: 1,
-    lineHeight: 21,
-  },
+  flex: 1,
+  minWidth: 0,
+  lineHeight: 21,
+},
   card: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xl,

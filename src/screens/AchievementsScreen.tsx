@@ -131,10 +131,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.md,
   },
-  gridItem: {
-    flexGrow: 1,
-    flexBasis: "47%",
-  },
+ gridItem: {
+  flexGrow: 1,
+  flexBasis: "47%",
+  minWidth: 0,
+},
   card: {
     flex: 1,
     alignItems: "center",

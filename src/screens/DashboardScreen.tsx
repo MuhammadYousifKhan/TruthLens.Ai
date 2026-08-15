@@ -199,9 +199,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   greetingBlock: {
-    flex: 1,
-    gap: spacing.xs,
-  },
+  flex: 1,
+  minWidth: 0,
+  gap: spacing.xs,
+},
   greeting: {
     // Reserves the line so the layout does not jump when the name loads.
     minHeight: 26,
@@ -235,9 +236,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(6, 19, 26, 0.14)",
   },
-  scanCopy: {
-    flex: 1,
-  },
+ scanCopy: {
+  flex: 1,
+  minWidth: 0,
+},
   scanSubtitle: {
     marginTop: spacing.xs,
     opacity: 0.75,
@@ -251,10 +253,11 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     padding: spacing.lg,
   },
-  pauseCopy: {
-    flex: 1,
-    gap: 2,
-  },
+pauseCopy: {
+  flex: 1,
+  minWidth: 0,
+  gap: 2,
+},
   iconChip: {
     width: 44,
     height: 44,
@@ -269,10 +272,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.md,
   },
-  gridItem: {
-    flexGrow: 1,
-    flexBasis: "47%",
-  },
+gridItem: {
+  flexGrow: 1,
+  flexBasis: "47%",
+  minWidth: 0,
+},
   gridPress: {
     flex: 1,
   },

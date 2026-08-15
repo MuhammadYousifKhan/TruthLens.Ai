@@ -237,9 +237,10 @@ const styles = StyleSheet.create({
     borderColor: colors.glassBorderStrong,
   },
   verdictCopy: {
-    flex: 1,
-    gap: 2,
-  },
+  flex: 1,
+  minWidth: 0,
+  gap: 2,
+},
   verdictLabelRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -327,8 +328,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   deepfakeText: {
-    flex: 1,
-  },
+  flex: 1,
+  minWidth: 0,
+},
   actions: {
     gap: spacing.sm,
   },

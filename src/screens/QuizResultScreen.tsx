@@ -136,11 +136,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.lg,
   },
-  card: {
-    alignItems: "center",
-    padding: spacing.xl,
-    marginBottom: spacing.xl,
-  },
+ card: {
+  alignItems: "center",
+  padding: spacing.xl,
+  marginBottom: spacing.xl,
+  width: "100%",
+  minWidth: 0,
+},
   badge: {
     width: 64,
     height: 64,
