@@ -29,4 +29,13 @@ export const auth =
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// The SDK defaults are 10 minutes for uploads and 2 for everything else, and it
+// treats a blocked CORS preflight as a retryable network error — so on web an
+// upload that can never succeed still burns the full backoff before rejecting,
+// freezing the Analyzing screen on stage 0. The scan flow degrades gracefully
+// without Storage, so failing fast is strictly better than retrying for minutes.
+storage.maxUploadRetryTime = 8000;
+storage.maxOperationRetryTime = 8000;
+
 export default app;

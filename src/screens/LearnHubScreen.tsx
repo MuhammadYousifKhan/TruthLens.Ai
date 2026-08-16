@@ -4,102 +4,118 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { lessons } from "../data/lessons";
 import { useQuizResults } from "../hooks/useQuizResults";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   BlurCard,
   Body,
-  BodyStrong,
   Caption,
   FadeIn,
-  GlassCard,
   Meter,
+  Numeral,
+  Overline,
   PressScale,
   Screen,
-  SectionLabel,
   Title,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { motion, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Learn">;
 
 export default function LearnHubScreen({ navigation }: Props) {
   const { results } = useQuizResults();
-  const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
-  const completedCount = sortedLessons.filter((lesson) => results[lesson.id]).length;
-  const ratio = sortedLessons.length > 0 ? completedCount / sortedLessons.length : 0;
+  const { t } = useLanguage();
+  const palette = usePalette();
+
+  const sorted = [...lessons].sort((a, b) => a.order - b.order);
+  const completed = sorted.filter((lesson) => results[lesson.id]).length;
+  const ratio = sorted.length > 0 ? completed / sorted.length : 0;
+  const nextIndex = sorted.findIndex((lesson) => !results[lesson.id]);
 
   return (
     <Screen scroll>
-      {/* Progress leads the screen: seeing "3 of 6" is what makes the next
+      {/* Progress leads the screen: seeing "2 of 6" is what makes the next
           lesson feel worth opening. */}
       <FadeIn>
-        <BlurCard style={styles.progressCard} tone="strong">
-          <View style={styles.progressHeader}>
-            <View style={styles.progressCopy}>
-              <Caption>Your progress</Caption>
-              <Title style={styles.progressTitle}>
-                {completedCount} of {sortedLessons.length} lessons
-              </Title>
-            </View>
-            <View style={styles.progressChip}>
-              <MaterialIcons name="school" size={22} color={colors.secondary} />
-            </View>
+        <BlurCard style={styles.hero} tone="strong">
+          <Overline>{t("learn.progress")}</Overline>
+          <View style={styles.countRow}>
+            <Numeral>{completed}</Numeral>
+            <Title color={palette.textSecondary} style={styles.countTotal}>
+              {t("learn.lessonsCount", { total: sorted.length })}
+            </Title>
           </View>
           <Meter
             value={ratio}
-            tone={colors.secondary}
             animateIn
-            style={styles.progressMeter}
-            accessibilityLabel={`${completedCount} of ${sortedLessons.length} lessons completed`}
+            accessibilityLabel={`${completed} of ${sorted.length} lessons completed`}
           />
         </BlurCard>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger}>
-        <SectionLabel>Lessons</SectionLabel>
-      </FadeIn>
+      <View style={[styles.list, { borderTopColor: palette.lineStrong }]}>
+        {sorted.map((lesson, index) => {
+          const isComplete = Boolean(results[lesson.id]);
+          const isNext = index === nextIndex;
+          const result = results[lesson.id];
 
-      {sortedLessons.map((lesson, index) => {
-        const isComplete = Boolean(results[lesson.id]);
-        return (
-          <FadeIn key={lesson.id} delay={motion.stagger * (2 + index)}>
-            <PressScale
-              onPress={() => navigation.navigate("LessonDetail", { lessonId: lesson.id })}
-              accessibilityRole="button"
-              accessibilityLabel={lesson.title}
-              accessibilityHint={isComplete ? "Completed. Opens the lesson" : "Opens the lesson"}
-              style={styles.rowWrapper}
-            >
-              <GlassCard
-                style={styles.row}
-                accent={isComplete ? colors.success : undefined}
+          return (
+            <FadeIn key={lesson.id} delay={motion.stagger * (1 + index)}>
+              <PressScale
+                onPress={() => navigation.navigate("LessonDetail", { lessonId: lesson.id })}
+                accessibilityRole="button"
+                accessibilityLabel={lesson.title}
+                accessibilityHint={isComplete ? "Completed. Opens the lesson" : "Opens the lesson"}
+                style={[
+                  styles.row,
+                  { borderBottomColor: palette.lineHairline },
+                  isNext && { backgroundColor: palette.statusAiSoft },
+                  !isComplete && !isNext && styles.rowPending,
+                ]}
               >
-                {/* Completion carries an icon and a text badge, so it never
-                    depends on the green alone. */}
-                <MaterialIcons
-                  name={isComplete ? "check-circle" : "radio-button-unchecked"}
-                  size={24}
-                  color={isComplete ? colors.success : colors.textFaint}
-                />
+                {/* Completion carries a mark and a word, so it never depends
+                    on the green alone. */}
+                {isComplete ? (
+                  <View style={[styles.mark, { backgroundColor: palette.statusAuthentic }]}>
+                    <MaterialIcons name="check" size={13} color={palette.statusAuthenticOn} />
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.markOutline,
+                      {
+                        borderColor: isNext ? palette.accentBrand : palette.lineStrong,
+                        borderWidth: isNext ? 2 : 1,
+                      },
+                    ]}
+                  />
+                )}
+
                 <View style={styles.rowCopy}>
-                  <BodyStrong>{lesson.title}</BodyStrong>
-                  <Caption color={isComplete ? colors.success : colors.textFaint}>
-                    {isComplete ? "Completed" : `Lesson ${index + 1}`}
+                  <Body style={styles.rowTitle}>{lesson.title}</Body>
+                  <Caption color={isNext ? palette.accentBrandText : undefined}>
+                    {isComplete
+                      ? `${t("quiz.passed")} · ${result.score}/${result.total}`
+                      : isNext
+                      ? t("learn.upNext")
+                      : `${t("nav.lesson")} ${index + 1}`}
                   </Caption>
                 </View>
-                <MaterialIcons name="chevron-right" size={22} color={colors.textFaint} />
-              </GlassCard>
-            </PressScale>
-          </FadeIn>
-        );
-      })}
 
-      {sortedLessons.length === 0 && (
-        <FadeIn delay={motion.stagger * 2}>
-          <GlassCard style={styles.empty}>
-            <Body muted center>
-              No lessons available yet.
-            </Body>
-          </GlassCard>
+                <MaterialIcons
+                  name="chevron-right"
+                  size={20}
+                  color={isNext ? palette.accentBrand : palette.textSecondary}
+                />
+              </PressScale>
+            </FadeIn>
+          );
+        })}
+      </View>
+
+      {sorted.length === 0 && (
+        <FadeIn delay={motion.stagger}>
+          <Body muted>No lessons available yet.</Body>
         </FadeIn>
       )}
     </Screen>
@@ -107,49 +123,48 @@ export default function LearnHubScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  progressCard: {
-    padding: spacing.xl,
+  hero: {
+    padding: spacing.xl - 4,
+    gap: spacing.md,
     marginBottom: spacing.xl,
   },
-  progressHeader: {
+  countRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.lg,
+    alignItems: "baseline",
+    gap: spacing.sm,
   },
-  progressCopy: {
-    flex: 1,
-    gap: 2,
+  countTotal: {
+    fontSize: 20,
   },
-  progressTitle: {
-    marginTop: spacing.xs,
-  },
-  progressChip: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.input,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.secondary + "55",
-  },
-  progressMeter: {
-    marginTop: spacing.lg,
-  },
-  rowWrapper: {
-    marginBottom: spacing.md,
+  list: {
+    borderTopWidth: 2,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    padding: spacing.lg,
+    gap: spacing.md + 2,
+    borderBottomWidth: 1,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xs,
+  },
+  rowPending: {
+    opacity: 0.62,
+  },
+  mark: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  markOutline: {
+    width: 20,
+    height: 20,
   },
   rowCopy: {
     flex: 1,
     gap: 2,
   },
-  empty: {
-    padding: spacing.xl,
+  rowTitle: {
+    fontWeight: "700",
   },
 });

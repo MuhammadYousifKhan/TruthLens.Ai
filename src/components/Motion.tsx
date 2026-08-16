@@ -73,8 +73,8 @@ export function FadeIn({
 /**
  * A slow breathing pulse, for surfaces that indicate work in progress.
  *
- * Deliberately gentle: a 4% scale swing over ~1.6s reads as "alive and
- * working" rather than as a loading spinner shouting for attention.
+ * Opacity only, .55 to 1 over ~1.6s. It used to swing scale, which nudged the
+ * layout of whatever sat next to it in a list; fading leaves the row still.
  */
 export function Pulse({
   children,
@@ -91,7 +91,9 @@ export function Pulse({
 
   useEffect(() => {
     if (!running) {
-      progress.setValue(0);
+      // Settled at full opacity — a reduce-motion user should see the lit
+      // state, not the dimmed half of the cycle frozen in place.
+      progress.setValue(1);
       return;
     }
     const loop = Animated.loop(
@@ -118,12 +120,7 @@ export function Pulse({
     <Animated.View
       style={[
         style,
-        {
-          transform: [
-            { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] }) },
-          ],
-          opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }),
-        },
+        { opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) },
       ]}
     >
       {children}

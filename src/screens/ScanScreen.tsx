@@ -4,32 +4,57 @@ import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   Body,
   Caption,
+  Display,
   FadeIn,
   GhostButton,
-  GlassCard,
   PressScale,
   PrimaryButton,
   Screen,
-  Title,
+  useTypeStyle,
 } from "../components";
-import { absoluteFill, colors, motion, radius, spacing } from "../theme/theme";
+import { absoluteFill, letterSpacing, motion, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Scan">;
 
 export default function ScanScreen({ navigation }: Props) {
+  const { t } = useLanguage();
+  const palette = usePalette();
+  const slotLabel = useTypeStyle("subtitle", "extrabold");
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   async function pickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Allow photo library access to upload an image.");
+      Alert.alert(t("scan.permissionTitle"), t("scan.libraryPermission"));
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setImageUri(result.assets[0].uri);
+    }
+  }
+
+  // The camera matters more than the library for the target user: most of what
+  // they want to check is on someone else's screen in front of them, not
+  // already saved to their own roll.
+  async function takePhoto() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t("scan.permissionTitle"), t("scan.cameraPermission"));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       quality: 0.7,
     });
@@ -45,99 +70,124 @@ export default function ScanScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen scroll center>
-      {!imageUri ? (
-        <FadeIn>
-          <Title center style={styles.prompt}>
-            What are you checking?
-          </Title>
-          <Body muted center style={styles.lede}>
-            Upload a photo or a screenshot from your feed.
+    <Screen scroll>
+      <FadeIn>
+        <View style={styles.titleBlock}>
+          <Display>{t("scan.prompt")}</Display>
+          <Body muted style={styles.lede}>
+            {t("scan.lede")}
           </Body>
+        </View>
+      </FadeIn>
 
+      {!imageUri ? (
+        <FadeIn delay={motion.stagger}>
           <PressScale
             onPress={pickImage}
-            scaleTo={0.98}
+            scaleTo={0.985}
             accessibilityRole="button"
-            accessibilityLabel="Upload an image"
-            accessibilityHint="Opens your photo library to pick an image to scan"
+            accessibilityLabel={t("scan.dropLabel")}
+            accessibilityHint={t("scan.dropHint")}
           >
-            {/* Dashed edge is the one place a border does semantic work: it
-                marks a slot waiting to be filled rather than a filled card. */}
-            <GlassCard style={styles.dropzone} highlight={false}>
-              <View style={styles.dropIcon}>
-                <MaterialIcons name="add-photo-alternate" size={32} color={colors.primary} />
+            {/* The dashed edge is the only place a border does semantic work:
+                it marks a slot waiting to be filled, not a filled card. */}
+            <View
+              style={[
+                styles.slot,
+                { borderColor: palette.lineStrong, backgroundColor: palette.surfaceGlass },
+              ]}
+            >
+              <View style={[styles.slotMark, { borderColor: palette.accentBrand }]}>
+                <MaterialIcons name="add" size={30} color={palette.accentBrand} />
               </View>
-              <Body center style={styles.dropLabel}>
-                Tap to upload an image
+              <Body style={[slotLabel, styles.slotLabel]}>
+                {t("scan.dropLabel").toUpperCase()}
               </Body>
-              <Caption center>JPG or PNG, from your library</Caption>
-            </GlassCard>
+              <Caption>{t("scan.fileHint")}</Caption>
+            </View>
           </PressScale>
         </FadeIn>
       ) : (
-        <FadeIn>
-          <View style={styles.previewFrame}>
+        <FadeIn delay={motion.stagger}>
+          <View style={[styles.preview, { backgroundColor: palette.imagePlaceholder }]}>
             <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
-            {/* Hairline over the photo edge so it belongs to the glass system
-                rather than sitting on the screen as a bare rectangle. */}
-            <View style={styles.previewEdge} pointerEvents="none" />
-          </View>
-
-          <FadeIn delay={motion.stagger}>
-            <PrimaryButton
-              label="Analyze image"
-              onPress={analyze}
-              icon="auto-awesome"
-              style={styles.analyze}
-              accessibilityHint="Runs the AI detector on this image"
+            <View
+              style={[styles.previewEdge, { borderColor: palette.lineHairline }]}
+              pointerEvents="none"
             />
-            <GhostButton label="Choose a different image" onPress={pickImage} icon="swap-horiz" />
-          </FadeIn>
+          </View>
         </FadeIn>
       )}
+
+      <FadeIn delay={motion.stagger * 2} style={styles.actions}>
+        {imageUri ? (
+          <>
+            <PrimaryButton
+              label={t("scan.analyze")}
+              onPress={analyze}
+              icon="arrow-forward"
+              iconTrailing
+              style={styles.action}
+            />
+            <GhostButton
+              label={t("scan.chooseDifferent")}
+              onPress={pickImage}
+              icon="swap-horiz"
+            />
+            <GhostButton label={t("scan.retake")} onPress={takePhoto} icon="photo-camera" />
+          </>
+        ) : (
+          <>
+            {/* Camera leads: it is the shorter path to the thing being checked,
+                and the library stays one tap away either way. */}
+            <PrimaryButton
+              label={t("scan.takePhoto")}
+              onPress={takePhoto}
+              icon="photo-camera"
+              iconTrailing={false}
+              style={styles.action}
+            />
+            <GhostButton label={t("scan.upload")} onPress={pickImage} icon="photo-library" />
+          </>
+        )}
+      </FadeIn>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  prompt: {
-    marginBottom: spacing.sm,
+  titleBlock: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+    gap: spacing.sm + 2,
   },
   lede: {
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
+    maxWidth: 300,
   },
-  dropzone: {
+  slot: {
+    minHeight: 300,
+    borderWidth: 2,
+    borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: spacing.xxxl,
-    paddingHorizontal: spacing.xl,
-    borderStyle: "dashed",
-    borderColor: colors.glassBorderStrong,
-    gap: spacing.xs,
+    gap: spacing.lg,
+    padding: spacing.xl,
   },
-  dropIcon: {
+  slotMark: {
     width: 68,
     height: 68,
-    borderRadius: radius.pill,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    marginBottom: spacing.lg,
   },
-  dropLabel: {
-    fontWeight: "600",
+  slotLabel: {
+    letterSpacing: letterSpacing.label,
+    textAlign: "center",
   },
-  previewFrame: {
+  preview: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: radius.hero,
     overflow: "hidden",
-    marginBottom: spacing.xl,
-    backgroundColor: colors.glassSunken,
   },
   previewImage: {
     width: "100%",
@@ -145,11 +195,13 @@ const styles = StyleSheet.create({
   },
   previewEdge: {
     ...absoluteFill,
-    borderRadius: radius.hero,
     borderWidth: 1,
-    borderColor: colors.glassBorderStrong,
   },
-  analyze: {
-    marginBottom: spacing.sm,
+  actions: {
+    marginTop: spacing.xl,
+    gap: spacing.sm + 2,
+  },
+  action: {
+    marginBottom: spacing.xs,
   },
 });

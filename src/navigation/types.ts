@@ -23,7 +23,8 @@ export type RootStackParamList = {
   Learn: undefined;
   LessonDetail: { lessonId: string };
   Quiz: { lessonId: string };
-  QuizResult: { lessonId: string; score: number; total: number };
+  /** `missed` drives the per-question breakdown on the result screen. */
+  QuizResult: { lessonId: string; score: number; total: number; missed?: number[] };
   Achievements: undefined;
   Profile: undefined;
   ReportCard: undefined;

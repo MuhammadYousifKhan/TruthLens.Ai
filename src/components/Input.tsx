@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import {
   Animated,
-  Easing,
   StyleSheet,
   TextInput,
   View,
@@ -10,17 +9,18 @@ import {
   type StyleProp,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors, fontSize, motion, radius, spacing, touchTarget } from "../theme/theme";
-import { Caption } from "./Typography";
+import { usePalette } from "../theme/ThemeContext";
+import { fontSize, radius, spacing, touchTarget } from "../theme/theme";
+import { Caption, Overline, useTypeStyle } from "./Typography";
 
 /**
- * A text field on glass.
+ * A text field.
  *
- * The field is a sunken channel — darker than the surface it sits in — so it
- * reads as somewhere to put something rather than as another card. Focus
- * raises a cyan border and fades in a matching glow; that colour shift, not a
- * shadow, is the focus indicator, and it is visible enough to satisfy WCAG's
- * focus-visible requirement for keyboard users.
+ * Opaque white in light, a sunken channel in dark — either way it reads as
+ * somewhere to put something rather than as another card. Focus swaps the
+ * hairline to the accent; that colour shift, not a glow, is the focus
+ * indicator, and it is visible enough to satisfy WCAG's focus-visible
+ * requirement for keyboard users.
  *
  * Font size is pinned at 16 because iOS zooms the viewport on any smaller
  * focused input.
@@ -28,13 +28,16 @@ import { Caption } from "./Typography";
 
 type GlassInputProps = TextInputProps & {
   icon?: keyof typeof MaterialIcons.glyphMap;
-  /** Renders a red border and reserves space for the message below. */
+  /** Small uppercase label above the field. */
+  label?: string;
+  /** Renders an accent left rule and the message below. */
   error?: string | null;
   containerStyle?: StyleProp<ViewStyle>;
 };
 
 export default function GlassInput({
   icon,
+  label,
   error,
   containerStyle,
   onFocus,
@@ -42,59 +45,72 @@ export default function GlassInput({
   style,
   ...rest
 }: GlassInputProps) {
+  const t = usePalette();
+  const inputStyle = useTypeStyle("subtitle", "regular");
   const [focused, setFocused] = useState(false);
-  const glow = useRef(new Animated.Value(0)).current;
-
-  function animateGlow(to: number) {
-    Animated.timing(glow, {
-      toValue: to,
-      duration: motion.fast,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: false,
-    }).start();
-  }
+  const shift = useRef(new Animated.Value(0)).current;
 
   const borderColor = error
-    ? colors.danger
-    : glow.interpolate({
-        inputRange: [0, 1],
-        outputRange: [colors.glassBorder, colors.primary],
-      });
+    ? t.statusAi
+    : focused
+    ? t.accentBrand
+    : t.lineHairline;
 
   return (
     <View style={containerStyle}>
-      <Animated.View style={[styles.field, { borderColor }]}>
+      {label && <Overline style={styles.label}>{label}</Overline>}
+
+      <View
+        style={[
+          styles.field,
+          {
+            backgroundColor: t.surfaceSunken,
+            borderColor,
+            borderRadius: radius.input,
+          },
+          // The error rule is a thick left edge rather than a full red box —
+          // it marks the field without shouting over the value inside it.
+          error ? { borderLeftWidth: 2, borderLeftColor: t.statusAi } : null,
+        ]}
+      >
         {icon && (
           <MaterialIcons
             name={icon}
             size={20}
-            color={focused ? colors.primary : colors.textFaint}
+            color={focused ? t.accentBrand : t.textTertiary}
+            style={styles.icon}
           />
         )}
         <TextInput
           {...rest}
-          style={[styles.input, style]}
-          placeholderTextColor={colors.placeholder}
-          // Cursor and selection pick up the accent on both platforms.
-          selectionColor={colors.primary}
-          cursorColor={colors.primary}
+          style={[
+            styles.input,
+            inputStyle,
+            // 16px minimum — anything smaller triggers iOS focus zoom.
+            { fontSize: fontSize.subtitle, color: t.textPrimary },
+            style,
+          ]}
+          placeholderTextColor={t.textPlaceholder}
+          selectionColor={t.accentBrand}
+          cursorColor={t.accentBrand}
           onFocus={(event) => {
             setFocused(true);
-            animateGlow(1);
             onFocus?.(event);
           }}
           onBlur={(event) => {
             setFocused(false);
-            animateGlow(0);
             onBlur?.(event);
           }}
         />
-      </Animated.View>
+      </View>
+
       {error && (
         <View style={styles.errorRow}>
           {/* Paired with an icon so the message does not rely on colour alone. */}
-          <MaterialIcons name="error-outline" size={14} color={colors.danger} />
-          <Caption color={colors.danger}>{error}</Caption>
+          <MaterialIcons name="error-outline" size={14} color={t.statusAi} />
+          <Caption color={t.statusAi} style={styles.errorText}>
+            {error}
+          </Caption>
         </View>
       )}
     </View>
@@ -102,21 +118,21 @@ export default function GlassInput({
 }
 
 const styles = StyleSheet.create({
+  label: {
+    marginBottom: spacing.xs + 2,
+  },
   field: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
     minHeight: touchTarget.minHeight,
-    borderRadius: radius.input,
     borderWidth: 1,
-    backgroundColor: colors.glassSunken,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md + 2,
+  },
+  icon: {
+    marginRight: spacing.md,
   },
   input: {
     flex: 1,
-    // 16px minimum — anything smaller triggers iOS focus zoom.
-    fontSize: fontSize.subtitle,
-    color: colors.text,
     paddingVertical: spacing.md,
   },
   errorRow: {
@@ -124,6 +140,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xs,
     marginTop: spacing.sm,
-    marginLeft: spacing.xs,
+  },
+  errorText: {
+    flex: 1,
   },
 });

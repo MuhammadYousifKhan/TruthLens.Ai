@@ -1,188 +1,173 @@
 import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { useQuizResults } from "../hooks/useQuizResults";
+import { useBadges } from "../hooks/useBadges";
+import { lessons } from "../data/lessons";
+import { badges } from "../data/badges";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
-  BlurCard,
   Body,
-  BodyStrong,
   Caption,
+  Display,
   FadeIn,
-  GlassCard,
+  Overline,
   PressScale,
+  ProfileHeaderMenu,
+  Rule,
   Screen,
   SectionLabel,
-  Subtitle,
   Title,
+  useTypeStyle,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { letterSpacing, motion, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
 
-type DashboardCard = {
-  key: string;
-  label: string;
-  hint: string;
-  icon: keyof typeof MaterialIcons.glyphMap;
-  /** Each destination owns a hue, so the grid is scannable by colour as well
-   *  as by label once the user knows the app. */
-  tone: string;
-  onPress: (navigation: Props["navigation"]) => void;
-};
-
-const secondaryCards: DashboardCard[] = [
-  {
-    key: "Learn",
-    label: "Learn",
-    hint: "Short lessons",
-    icon: "school",
-    tone: colors.secondary,
-    onPress: (nav) => nav.navigate("Learn"),
-  },
-  {
-    key: "Quiz",
-    label: "Quiz",
-    hint: "Test yourself",
-    icon: "quiz",
-    tone: colors.secondary,
-    onPress: (nav) => nav.navigate("Learn"),
-  },
-  {
-    key: "Game",
-    label: "Spot the fake",
-    hint: "Train your eye",
-    icon: "visibility",
-    tone: colors.primary,
-    onPress: (nav) => nav.navigate("Game"),
-  },
-  {
-    key: "Achievements",
-    label: "Achievements",
-    hint: "Your badges",
-    icon: "emoji-events",
-    tone: colors.warning,
-    onPress: (nav) => nav.navigate("Achievements"),
-  },
-  {
-    key: "Profile",
-    label: "Profile",
-    hint: "Scans & stats",
-    icon: "person",
-    tone: colors.info,
-    onPress: (nav) => nav.navigate("Profile"),
-  },
-  {
-    key: "DeepfakeHelp",
-    label: "If it's a deepfake",
-    hint: "Get support",
-    icon: "shield",
-    tone: colors.danger,
-    onPress: (nav) => nav.navigate("DeepfakeHelp"),
-  },
-];
-
+/**
+ * One loud thing, one warm thing, one quiet list.
+ *
+ * The scan action is a full-bleed accent field with display type — there is
+ * never a question about what this screen is for. Everything else is a ruled
+ * index, which is cheaper to scan than a tile grid and reads far better at
+ * video resolution than five competing coloured cards did.
+ */
 export default function DashboardScreen({ navigation }: Props) {
+  const t2 = usePalette();
+  const { t } = useLanguage();
   const { profile, loading } = useUserProfile();
+  const { results } = useQuizResults();
+  const { earnedIds } = useBadges();
+  const scanLabel = useTypeStyle("body", "extrabold");
 
-  const greetingName = loading ? "" : profile?.name?.split(" ")[0] || "there";
+  const firstName = loading ? "" : profile?.name?.split(" ")[0] || "there";
+  const initials =
+    profile?.name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || undefined;
+
   const xp = profile?.xp ?? 0;
+  const lessonsDone = lessons.filter((lesson) => results[lesson.id]).length;
+  const badgesDone = badges.filter((badge) => earnedIds.has(badge.id)).length;
+
+  const index = [
+    {
+      key: "Learn",
+      label: t("dashboard.cardLearnLabel"),
+      meta: `${lessonsDone} / ${lessons.length}`,
+      onPress: () => navigation.navigate("Learn"),
+    },
+    {
+      key: "Game",
+      label: t("dashboard.cardGameLabel"),
+      meta: t("dashboard.cardGameHint"),
+      onPress: () => navigation.navigate("Game"),
+    },
+    {
+      key: "Achievements",
+      label: t("dashboard.cardAchievementsLabel"),
+      meta: `${badgesDone} / ${badges.length}`,
+      onPress: () => navigation.navigate("Achievements"),
+    },
+    {
+      key: "DeepfakeHelp",
+      label: t("dashboard.cardDeepfakeLabel"),
+      meta: t("dashboard.cardDeepfakeHint"),
+      onPress: () => navigation.navigate("DeepfakeHelp"),
+    },
+  ];
 
   return (
     <Screen scroll>
       <FadeIn>
         <View style={styles.header}>
-          <View style={styles.greetingBlock}>
-            <Caption>{loading ? "Loading" : "Welcome back"}</Caption>
-            <Title style={styles.greeting}>{loading ? " " : `Hi, ${greetingName}`}</Title>
+          <View style={styles.greeting}>
+            <Overline>{loading ? t("dashboard.loading") : t("dashboard.welcomeBack")}</Overline>
+            <Title style={styles.name}>{loading ? " " : firstName}</Title>
           </View>
-
-          <BlurCard style={styles.xpPill} radius={radius.pill} highlight={false} tone="strong">
-            <MaterialIcons name="bolt" size={16} color={colors.primary} />
-            <BodyStrong color={colors.primary}>{xp} XP</BodyStrong>
-          </BlurCard>
+          <ProfileHeaderMenu initials={initials} />
         </View>
       </FadeIn>
 
-      {/* The single strongest action on the screen — filled, glowing, and the
-          only element allowed to use the accent as a full background. */}
+      {/* XP sits between two rules — a masthead figure, not a badge. */}
       <FadeIn delay={motion.stagger}>
-        <PressScale
-          onPress={() => navigation.navigate("Scan")}
-          scaleTo={0.98}
-          accessibilityRole="button"
-          accessibilityLabel="Scan content"
-          accessibilityHint="Check whether an image is AI-generated before you share it"
-          style={styles.scanCard}
-        >
-          <LinearGradient
-            colors={[colors.primary, colors.primaryDeep]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.scanIcon}>
-            <MaterialIcons name="document-scanner" size={28} color={colors.onPrimary} />
-          </View>
-          <View style={styles.scanCopy}>
-            <Title color={colors.onPrimary}>Scan content</Title>
-            <Body color={colors.onPrimary} style={styles.scanSubtitle}>
-              Check if an image is real before you share it
-            </Body>
-          </View>
-          <MaterialIcons name="arrow-forward" size={22} color={colors.onPrimary} />
-        </PressScale>
+        <View style={[styles.xpBand, { borderColor: t2.lineStrong }]}>
+          <Title>{xp.toLocaleString()}</Title>
+          <Overline style={styles.xpLabel}>{t("dashboard.xpLabel", { xp })}</Overline>
+        </View>
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 2}>
         <PressScale
-          onPress={() => navigation.navigate("Pause")}
+          onPress={() => navigation.navigate("Scan")}
+          scaleTo={0.985}
           accessibilityRole="button"
-          accessibilityLabel="Think before you share"
-          style={styles.pauseWrapper}
+          accessibilityLabel={t("dashboard.scanTitle")}
+          accessibilityHint={t("dashboard.scanSubtitle")}
+          style={[styles.scanField, { backgroundColor: t2.accentBrandFill }]}
         >
-          <GlassCard style={styles.pauseCard} accent={colors.warning}>
-            <View style={[styles.iconChip, { borderColor: colors.warning + "55" }]}>
-              <MaterialIcons name="pause-circle-outline" size={22} color={colors.warning} />
-            </View>
-            <View style={styles.pauseCopy}>
-              <Subtitle>Think before you share</Subtitle>
-              <Caption>Run the five-second check</Caption>
-            </View>
-            <MaterialIcons name="chevron-right" size={22} color={colors.textFaint} />
-          </GlassCard>
+          <Overline color={t2.accentOn}>{t("dashboard.scanKicker")}</Overline>
+          <Display color={t2.accentOn} style={styles.scanTitle}>
+            {t("dashboard.scanTitle")}
+          </Display>
+          <View style={[styles.scanRule, { backgroundColor: t2.accentOn }]} />
+          <View style={styles.scanFoot}>
+            <Body style={[scanLabel, styles.scanFootLabel, { color: t2.accentOn }]}>
+              {t("dashboard.scanSubtitle").toUpperCase()}
+            </Body>
+            <MaterialIcons name="arrow-forward" size={22} color={t2.accentOn} />
+          </View>
         </PressScale>
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 3}>
-        <SectionLabel>Build the habit</SectionLabel>
+        <PressScale
+          onPress={() => navigation.navigate("Pause")}
+          accessibilityRole="button"
+          accessibilityLabel={t("dashboard.pauseTitle")}
+          accessibilityHint={t("dashboard.pauseHint")}
+          style={[
+            styles.pauseRow,
+            { borderColor: t2.statusUncertain, backgroundColor: t2.statusUncertainSoft },
+          ]}
+        >
+          <View style={styles.pauseCopy}>
+            <Body style={[scanLabel, { color: t2.statusUncertain }]}>
+              {t("dashboard.pauseTitle")}
+            </Body>
+            <Caption>{t("dashboard.pauseHint")}</Caption>
+          </View>
+          <MaterialIcons name="arrow-forward" size={20} color={t2.statusUncertain} />
+        </PressScale>
       </FadeIn>
 
-      <View style={styles.grid}>
-        {secondaryCards.map((card, index) => (
-          <FadeIn
-            key={card.key}
-            delay={motion.stagger * (4 + index)}
-            style={styles.gridItem}
-          >
+      <FadeIn delay={motion.stagger * 4}>
+        <SectionLabel style={styles.section}>{t("dashboard.sectionBuildHabit")}</SectionLabel>
+      </FadeIn>
+
+      <View style={[styles.index, { borderTopColor: t2.lineHairline }]}>
+        {index.map((item, position) => (
+          <FadeIn key={item.key} delay={motion.stagger * (5 + position)}>
             <PressScale
-              onPress={() => card.onPress(navigation)}
+              onPress={item.onPress}
               accessibilityRole="button"
-              accessibilityLabel={card.label}
-              accessibilityHint={card.hint}
-              style={styles.gridPress}
+              accessibilityLabel={item.label}
+              style={[styles.indexRow, { borderBottomColor: t2.lineHairline }]}
             >
-              <GlassCard style={styles.gridCard}>
-                <View style={[styles.iconChip, { borderColor: card.tone + "55" }]}>
-                  <View
-                    style={[StyleSheet.absoluteFill, { backgroundColor: card.tone, opacity: 0.12 }]}
-                  />
-                  <MaterialIcons name={card.icon} size={22} color={card.tone} />
-                </View>
-                <Subtitle style={styles.gridLabel}>{card.label}</Subtitle>
-                <Caption>{card.hint}</Caption>
-              </GlassCard>
+              <Overline color={t2.textTertiary} style={styles.indexNumber}>
+                {String(position + 1).padStart(2, "0")}
+              </Overline>
+              <Title style={styles.indexLabel}>{item.label}</Title>
+              <Caption numberOfLines={1} style={styles.indexMeta}>
+                {item.meta}
+              </Caption>
+              <MaterialIcons name="chevron-right" size={20} color={t2.textSecondary} />
             </PressScale>
           </FadeIn>
         ))}
@@ -196,98 +181,89 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.xl,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
-  greetingBlock: {
-  flex: 1,
-  minWidth: 0,
-  gap: spacing.xs,
-},
   greeting: {
+    flex: 1,
+    // Lets the name shrink past its intrinsic width instead of pushing the
+    // row wider than the screen when it is long.
+    minWidth: 0,
+    gap: spacing.xs,
+  },
+  name: {
     // Reserves the line so the layout does not jump when the name loads.
     minHeight: 26,
   },
-  xpPill: {
+  xpBand: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  scanCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.lg,
-    borderRadius: radius.hero,
-    padding: spacing.xl,
+    alignItems: "baseline",
+    gap: spacing.sm,
+    borderTopWidth: 2,
+    borderBottomWidth: 2,
+    paddingVertical: spacing.sm + 2,
     marginBottom: spacing.lg,
-    overflow: "hidden",
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
   },
-  scanIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.input,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(6, 19, 26, 0.14)",
+  xpLabel: {
+    flex: 1,
   },
- scanCopy: {
-  flex: 1,
-  minWidth: 0,
-},
-  scanSubtitle: {
-    marginTop: spacing.xs,
-    opacity: 0.75,
+  scanField: {
+    padding: spacing.xl - 2,
+    paddingBottom: spacing.xl - 4,
+    gap: spacing.md + 2,
+    marginBottom: spacing.lg,
   },
-  pauseWrapper: {
-    marginBottom: spacing.xl,
+  scanTitle: {
+    marginTop: -2,
   },
-  pauseCard: {
+  scanRule: {
+    height: 2,
+    opacity: 0.4,
+  },
+  scanFoot: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.lg,
-    padding: spacing.lg,
-  },
-pauseCopy: {
-  flex: 1,
-  minWidth: 0,
-  gap: 2,
-},
-  iconChip: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.input,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: spacing.md,
   },
-gridItem: {
-  flexGrow: 1,
-  flexBasis: "47%",
-  minWidth: 0,
-},
-  gridPress: {
+  scanFootLabel: {
     flex: 1,
+    letterSpacing: letterSpacing.label,
   },
-  gridCard: {
+  pauseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    borderWidth: 1,
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  pauseCopy: {
     flex: 1,
-    minHeight: 132,
-    padding: spacing.lg,
-    justifyContent: "flex-end",
+    minWidth: 0,
     gap: 2,
   },
-  gridLabel: {
-    marginTop: spacing.md,
+  section: {
+    marginBottom: spacing.xs,
+  },
+  index: {
+    borderTopWidth: 1,
+  },
+  indexRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md + 2,
+    borderBottomWidth: 1,
+    paddingVertical: spacing.md + 3,
+  },
+  indexNumber: {
+    width: 20,
+  },
+  indexLabel: {
+    flex: 1,
+  },
+  indexMeta: {
+    maxWidth: 96,
+    textAlign: "right",
   },
 });

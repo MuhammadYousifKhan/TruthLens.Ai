@@ -1,56 +1,63 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import { MaterialIcons } from "@expo/vector-icons";
 import { auth } from "../firebase/config";
 import { createUserDocument } from "../firebase/users";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   BlurCard,
   Body,
   Caption,
+  Display,
   FadeIn,
-  GhostButton,
   GlassInput,
-  Heading,
+  LanguageToggle,
+  Overline,
   PrimaryButton,
   Screen,
+  UnderlineLink,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { motion, spacing } from "../theme/theme";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Mode = "login" | "signup";
+type FieldErrorId = "name" | "email" | "password";
 
-function friendlyAuthError(code: string): string {
+function friendlyAuthError(code: string, t: (key: string) => string): string {
   switch (code) {
     case "auth/invalid-email":
-      return "That email address doesn't look right.";
+      return t("login.errorInvalidEmail");
     case "auth/user-not-found":
-      return "No account found with that email.";
+      return t("login.errorUserNotFound");
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "Incorrect email or password.";
+      return t("login.errorWrongPassword");
     case "auth/email-already-in-use":
-      return "An account already exists with that email.";
+      return t("login.errorEmailInUse");
     case "auth/weak-password":
-      return "Password should be at least 6 characters.";
+      return t("login.errorWeakPassword");
     case "auth/network-request-failed":
-      return "Check your connection and try again.";
+      return t("login.errorNetworkFailed");
     default:
-      return "Something went wrong. Please try again.";
+      return t("login.errorGeneric");
   }
 }
 
 export default function LoginScreen() {
+  const { t } = useLanguage();
+  const palette = usePalette();
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<FieldErrorId | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -58,15 +65,15 @@ export default function LoginScreen() {
 
   function validate(): boolean {
     if (isSignup && name.trim().length === 0) {
-      setFieldError("Enter your name.");
+      setFieldError("name");
       return false;
     }
     if (!EMAIL_REGEX.test(email.trim())) {
-      setFieldError("Enter a valid email address.");
+      setFieldError("email");
       return false;
     }
     if (password.length < 6) {
-      setFieldError("Password must be at least 6 characters.");
+      setFieldError("password");
       return false;
     }
     setFieldError(null);
@@ -89,7 +96,7 @@ export default function LoginScreen() {
       // AuthContext picks up the resulting auth-state change and RootNavigator
       // switches to the signed-in stack automatically.
     } catch (err: any) {
-      setSubmitError(friendlyAuthError(err?.code ?? ""));
+      setSubmitError(friendlyAuthError(err?.code ?? "", t));
     } finally {
       setLoading(false);
     }
@@ -101,48 +108,57 @@ export default function LoginScreen() {
     setSubmitError(null);
   }
 
-  // The first field is the only one that can hold a validation error at a
-  // time, so the message renders under whichever field failed.
-  const nameError = fieldError?.startsWith("Enter your name") ? fieldError : null;
-  const emailError = fieldError?.startsWith("Enter a valid email") ? fieldError : null;
-  const passwordError = fieldError?.startsWith("Password must") ? fieldError : null;
+  // Only the first failing field can hold a validation error at a time.
+  const nameError = fieldError === "name" ? t("login.nameRequired") : null;
+  const emailError = fieldError === "email" ? t("login.emailInvalid") : null;
+  const passwordError = fieldError === "password" ? t("login.passwordTooShort") : null;
 
   return (
-    <Screen scroll center avoidKeyboard>
+    <Screen scroll avoidKeyboard wash="bottomLeft">
       <FadeIn>
         <View style={styles.brandRow}>
-          <View style={styles.mark}>
-            <MaterialIcons name="center-focus-strong" size={26} color={colors.primary} />
+          <View style={styles.brand}>
+            <View style={[styles.mark, { borderColor: palette.accentBrand }]}>
+              <View style={[styles.markCore, { backgroundColor: palette.accentBrand }]} />
+            </View>
+            <Overline color={palette.textPrimary}>{t("login.brand")}</Overline>
           </View>
-          <Heading>TruthLens AI</Heading>
+          <LanguageToggle />
         </View>
-        <Body muted style={styles.lede}>
-          {isSignup
-            ? "Build the habit of checking before you share."
-            : "Welcome back — let's keep that streak going."}
-        </Body>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger}>
+        <View style={styles.titleBlock}>
+          <Overline color={palette.accentBrand}>
+            {isSignup ? t("login.kickerSignup") : t("login.kickerLogin")}
+          </Overline>
+          <Display style={styles.title}>
+            {isSignup ? t("login.titleSignup") : t("login.titleLogin")}
+          </Display>
+        </View>
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 2}>
-        {/* One of the four hero surfaces that gets real backdrop blur. */}
+        {/* The one translucent surface on this screen. Fields inside it stay
+            opaque so the value you are typing never fights the backdrop. */}
         <BlurCard style={styles.card} tone="strong">
           {isSignup && (
             <GlassInput
-              icon="person-outline"
-              placeholder="Name"
+              label={t("login.namePlaceholder")}
+              placeholder={t("login.namePlaceholder")}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
               autoComplete="name"
               error={nameError}
               containerStyle={styles.field}
-              accessibilityLabel="Name"
+              accessibilityLabel={t("login.namePlaceholder")}
             />
           )}
 
           <GlassInput
-            icon="alternate-email"
-            placeholder="Email"
+            label={t("login.emailPlaceholder")}
+            placeholder={t("login.emailPlaceholder")}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -150,45 +166,53 @@ export default function LoginScreen() {
             autoComplete="email"
             error={emailError}
             containerStyle={styles.field}
-            accessibilityLabel="Email"
+            accessibilityLabel={t("login.emailPlaceholder")}
           />
 
           <GlassInput
-            icon="lock-outline"
-            placeholder="Password"
+            label={t("login.passwordPlaceholder")}
+            placeholder={t("login.passwordPlaceholder")}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
             error={passwordError}
             containerStyle={styles.field}
-            accessibilityLabel="Password"
+            accessibilityLabel={t("login.passwordPlaceholder")}
           />
 
           {submitError && (
-            <View style={styles.submitError}>
-              <MaterialIcons name="error-outline" size={16} color={colors.danger} />
-              <Caption color={colors.danger} style={styles.submitErrorText}>
+            <View
+              style={[
+                styles.submitError,
+                { backgroundColor: palette.statusAiSoft, borderLeftColor: palette.statusAi },
+              ]}
+            >
+              <MaterialIcons name="error-outline" size={16} color={palette.statusAi} />
+              <Caption color={palette.accentBrandText} style={styles.submitErrorText}>
                 {submitError}
               </Caption>
             </View>
           )}
 
           <PrimaryButton
-            label={isSignup ? "Create account" : "Log in"}
+            label={isSignup ? t("login.createAccount") : t("login.logIn")}
             onPress={handleSubmit}
             loading={loading}
             icon="arrow-forward"
             iconTrailing
-            style={styles.submit}
-          />
-
-          <GhostButton
-            label={isSignup ? "Already have an account? Log in" : "New here? Create an account"}
-            onPress={toggleMode}
-            disabled={loading}
           />
         </BlurCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 3}>
+        <View style={styles.switchRow}>
+          <Body muted>{isSignup ? t("login.haveAccount") : t("login.newHere")}</Body>
+          <UnderlineLink
+            label={isSignup ? t("login.linkLogin") : t("login.linkSignup")}
+            onPress={loading ? undefined : toggleMode}
+          />
+        </View>
       </FadeIn>
     </Screen>
   );
@@ -198,27 +222,35 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: spacing.md,
   },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm + 2,
+  },
   mark: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
+    width: 26,
+    height: 26,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
   },
-  lede: {
-    textAlign: "center",
-    marginTop: spacing.md,
-    marginBottom: spacing.xxl,
-    paddingHorizontal: spacing.lg,
+  markCore: {
+    width: 8,
+    height: 8,
+  },
+  titleBlock: {
+    marginTop: spacing.xxl + spacing.lg,
+    marginBottom: spacing.xl,
+    gap: spacing.sm + 2,
+  },
+  title: {
+    maxWidth: 320,
   },
   card: {
-    padding: spacing.xl,
+    padding: spacing.xl - 2,
   },
   field: {
     marginBottom: spacing.lg,
@@ -227,15 +259,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.input,
+    borderLeftWidth: 2,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   submitErrorText: {
     flex: 1,
   },
-  submit: {
-    marginBottom: spacing.sm,
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.xl,
   },
 });

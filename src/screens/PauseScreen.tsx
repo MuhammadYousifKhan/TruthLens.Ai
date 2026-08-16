@@ -5,21 +5,22 @@ import { MaterialIcons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import { awardVerificationActionXp } from "../firebase/actions";
 import {
   Body,
-  BodyStrong,
   Caption,
+  Display,
   FadeIn,
-  GlassCard,
-  Heading,
   Meter,
+  Overline,
   PressScale,
   PrimaryButton,
   Screen,
   SecondaryButton,
 } from "../components";
-import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
+import { motion, spacing, touchTarget } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Pause">;
 type CheckId = "source" | "seenElsewhere" | "emotion";
@@ -27,29 +28,30 @@ type CheckId = "source" | "seenElsewhere" | "emotion";
 const COOLDOWN_MS = 2500;
 const TICK_MS = 100;
 
-const CHECKS: { id: CheckId; label: string; hint: string }[] = [
-  { id: "source", label: "Do you know the source?", hint: "Who posted it first?" },
-  { id: "seenElsewhere", label: "Have you seen it elsewhere?", hint: "One outlet is not enough" },
-  {
-    id: "emotion",
-    label: "Does it make you feel a strong emotion?",
-    hint: "Outrage travels faster than truth",
-  },
-];
-
 /**
  * The friction screen.
  *
- * The whole point is to slow the share down, so the design leans into the
- * wait instead of hiding it: a meter fills for 2.5s before the share button
- * unlocks, and "I'll verify first" is styled as the primary action while it
- * does. The delay is visible and finite, which makes it feel deliberate rather
- * than broken.
+ * Amber owns it end to end. The whole point is to slow the share down, so the
+ * design leans into the wait instead of hiding it: a bar fills for 2.5s before
+ * the share button unlocks, and "I'll verify first" is the filled amber field
+ * while it does. The delay is visible and finite, which makes it read as
+ * deliberate rather than broken.
+ *
+ * Because the primary button stayed opaque, the hierarchy is unambiguous in
+ * both modes — there is never a moment where sharing looks like the easy path.
  */
 export default function PauseScreen({ navigation, route }: Props) {
   const { imageUri, imageUrl } = route.params ?? {};
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const palette = usePalette();
   const hasImage = Boolean(imageUri);
+
+  const CHECKS: { id: CheckId; label: string; hint: string }[] = [
+    { id: "source", label: t("pause.check1Label"), hint: t("pause.check1Hint") },
+    { id: "seenElsewhere", label: t("pause.check2Label"), hint: t("pause.check2Hint") },
+    { id: "emotion", label: t("pause.check3Label"), hint: t("pause.check3Hint") },
+  ];
 
   const [checks, setChecks] = useState<Record<CheckId, boolean>>({
     source: false,
@@ -91,99 +93,109 @@ export default function PauseScreen({ navigation, route }: Props) {
     await Sharing.shareAsync(imageUri, { mimeType: "image/*" });
   }
 
+  const remaining = Math.max(0, Math.ceil((COOLDOWN_MS - elapsed) / 1000));
+
   return (
-    <Screen scroll>
+    <Screen scroll wash="bottomLeft" washTone={palette.statusUncertainSoft}>
       <FadeIn>
-        <View style={styles.kickerChip}>
-          <MaterialIcons name="pause-circle-outline" size={26} color={colors.warning} />
+        <View style={styles.kickerRow}>
+          <View style={[styles.kickerMark, { backgroundColor: palette.statusUncertain }]}>
+            <MaterialIcons name="priority-high" size={20} color={palette.statusUncertainOn} />
+          </View>
+          <Overline color={palette.statusUncertain}>{t("nav.pause")}</Overline>
         </View>
-        <Heading style={styles.title}>Pause.</Heading>
+
+        <Display style={styles.title}>{t("pause.title")}</Display>
         <Body muted style={styles.lede}>
-          Three quick checks before this leaves your hands.
+          {t("pause.lede")}
         </Body>
       </FadeIn>
 
-      {CHECKS.map((check, index) => {
-        const isChecked = checks[check.id];
-        return (
-          <FadeIn key={check.id} delay={motion.stagger * (1 + index)}>
-            <PressScale
-              onPress={() => toggleCheck(check.id)}
-              accessibilityRole="checkbox"
-              accessibilityLabel={check.label}
-              accessibilityHint={check.hint}
-              accessibilityState={{ checked: isChecked }}
-              style={styles.checkWrapper}
-            >
-              <GlassCard
-                style={styles.checkRow}
-                accent={isChecked ? colors.warning : undefined}
+      <View style={styles.checks}>
+        {CHECKS.map((check, index) => {
+          const isChecked = checks[check.id];
+          return (
+            <FadeIn key={check.id} delay={motion.stagger * (1 + index)}>
+              <PressScale
+                onPress={() => toggleCheck(check.id)}
+                accessibilityRole="checkbox"
+                accessibilityLabel={check.label}
+                accessibilityHint={check.hint}
+                accessibilityState={{ checked: isChecked }}
+                style={[
+                  styles.checkRow,
+                  {
+                    borderColor: isChecked ? palette.statusUncertain : palette.lineHairline,
+                    backgroundColor: isChecked ? palette.statusUncertainSoft : "transparent",
+                  },
+                ]}
               >
                 <View
                   style={[
-                    styles.checkbox,
-                    isChecked && { backgroundColor: colors.warning, borderColor: colors.warning },
+                    styles.box,
+                    isChecked
+                      ? { backgroundColor: palette.statusUncertain, borderColor: palette.statusUncertain }
+                      : { borderColor: palette.lineStrong },
                   ]}
                 >
-                  {isChecked && <MaterialIcons name="check" size={16} color={colors.background} />}
+                  {isChecked && (
+                    <MaterialIcons name="check" size={14} color={palette.statusUncertainOn} />
+                  )}
                 </View>
                 <View style={styles.checkCopy}>
-                  <BodyStrong>{check.label}</BodyStrong>
+                  <Body>{check.label}</Body>
                   <Caption>{check.hint}</Caption>
                 </View>
-              </GlassCard>
-            </PressScale>
-          </FadeIn>
-        );
-      })}
+              </PressScale>
+            </FadeIn>
+          );
+        })}
+      </View>
 
       <FadeIn delay={motion.stagger * 4} style={styles.actions}>
         {/* Verifying is the primary action here, not sharing. The visual
             hierarchy has to agree with what the screen is asking for. */}
         <PrimaryButton
-          label="I'll verify first"
+          label={t("pause.verifyFirst")}
           onPress={verifyFirst}
-          icon="fact-check"
-          style={styles.action}
-          accessibilityHint="Opens the fact-checking checklist"
+          icon="arrow-forward"
+          iconTrailing
+          tone={palette.statusUncertain}
+          onTone={palette.statusUncertainOn}
+          large
         />
 
         {hasImage ? (
-          <View>
+          <View style={styles.shareBlock}>
             {!canShare && (
               <View style={styles.cooldown}>
                 <Meter
                   value={elapsed / COOLDOWN_MS}
-                  tone={colors.textMuted}
-                  height={4}
-                  accessibilityLabel="Share unlocks in a moment"
+                  tone={palette.textSecondary}
+                  height={6}
+                  accessibilityLabel={t("pause.cooldownNote")}
                 />
-                <Caption center style={styles.cooldownNote}>
-                  Take a breath — sharing unlocks in a moment
-                </Caption>
+                <View style={styles.cooldownRow}>
+                  <Overline>{t("pause.unlocksIn", { n: remaining })}</Overline>
+                  <Overline>{t("pause.cooldownNote")}</Overline>
+                </View>
               </View>
             )}
             <SecondaryButton
-              label={canShare ? "Share anyway" : "Waiting…"}
+              label={canShare ? t("pause.shareAnyway") : t("pause.waiting")}
               onPress={shareAnyway}
               disabled={!canShare}
-              icon="ios-share"
-              tone={colors.textMuted}
+              tone={palette.textSecondary}
             />
           </View>
         ) : (
-          <GlassCard style={styles.practiceNote} tone="sunken" highlight={false}>
-            <MaterialIcons name="science" size={18} color={colors.textMuted} />
-            <Caption style={styles.practiceText}>
-              Practice mode — scan an image first to actually share it.
-            </Caption>
+          <View style={[styles.practice, { borderColor: palette.lineHairline }]}>
+            <Caption style={styles.practiceText}>{t("pause.practiceNote")}</Caption>
             <SecondaryButton
-              label="Scan an image"
+              label={t("pause.scanAnImage")}
               onPress={() => navigation.navigate("Scan")}
-              icon="document-scanner"
-              style={styles.practiceButton}
             />
-          </GlassCard>
+          </View>
         )}
       </FadeIn>
     </Screen>
@@ -191,67 +203,70 @@ export default function PauseScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  kickerChip: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.pill,
+  kickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm + 2,
+    marginTop: spacing.sm,
+  },
+  kickerMark: {
+    width: 34,
+    height: 34,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.warning + "55",
-    marginBottom: spacing.lg,
   },
   title: {
-    marginBottom: spacing.xs,
+    marginTop: spacing.lg,
   },
   lede: {
-    marginBottom: spacing.xl,
+    marginTop: spacing.md,
+    maxWidth: 320,
   },
-  checkWrapper: {
-    marginBottom: spacing.md,
+  checks: {
+    marginTop: spacing.xl,
+    gap: spacing.sm,
   },
   checkRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.md,
-    padding: spacing.lg,
+    borderWidth: 1,
+    padding: spacing.md + 2,
     minHeight: touchTarget.minHeight,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.glassBorderStrong,
+  box: {
+    width: 22,
+    height: 22,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 1,
   },
   checkCopy: {
     flex: 1,
     gap: 2,
   },
   actions: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
+    gap: spacing.lg,
   },
-  action: {
-    marginBottom: spacing.md,
+  shareBlock: {
+    gap: spacing.md,
   },
   cooldown: {
-    marginBottom: spacing.md,
-  },
-  cooldownNote: {
-    marginTop: spacing.sm,
-  },
-  practiceNote: {
-    alignItems: "center",
     gap: spacing.sm,
+  },
+  cooldownRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  practice: {
+    borderWidth: 1,
     padding: spacing.lg,
+    gap: spacing.md,
   },
   practiceText: {
-    textAlign: "center",
-  },
-  practiceButton: {
-    marginTop: spacing.sm,
+    textAlign: "left",
   },
 });

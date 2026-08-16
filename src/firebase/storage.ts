@@ -6,6 +6,11 @@ function guessExtension(uri: string): string {
   return match ? match[1].toLowerCase() : "jpg";
 }
 
+// A hard ceiling on the whole upload, independent of the SDK's own retry budget
+// (capped in ./config). Storage is optional to the scan flow, so a slow or
+// blocked upload must never hold the Analyzing screen hostage.
+const UPLOAD_TIMEOUT_MS = 10000;
+
 // Uploads a local picker URI to Storage at scans/{uid}/{filename} and returns
 // its public download URL. Requires Blaze billing to be enabled on the
 // Firebase project — until then this rejects and callers should fall back to
@@ -22,7 +27,25 @@ export async function uploadScanImageAsync(uid: string, localUri: string): Promi
   });
 
   await new Promise<void>((resolve, reject) => {
-    task.on("state_changed", undefined, reject, () => resolve());
+    const timer = setTimeout(() => {
+      // cancel() re-enters the error callback below, but the promise has already
+      // settled by then, so the second reject is a no-op.
+      task.cancel();
+      reject(new Error(`Upload exceeded ${UPLOAD_TIMEOUT_MS}ms`));
+    }, UPLOAD_TIMEOUT_MS);
+
+    task.on(
+      "state_changed",
+      undefined,
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve();
+      }
+    );
   });
 
   return getDownloadURL(storageRef);
