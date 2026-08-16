@@ -1,7 +1,5 @@
 import { useRef } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { useUserProfile } from "../hooks/useUserProfile";
@@ -10,29 +8,33 @@ import { useBadges } from "../hooks/useBadges";
 import { useVerificationActions } from "../hooks/useVerificationActions";
 import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   Body,
   Caption,
-  Display,
   FadeIn,
   Overline,
+  Pill,
   PrimaryButton,
   Screen,
   Title,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { motion, spacing } from "../theme/theme";
 
 /**
  * The shareable habits card.
  *
- * Everything inside `cardRef` is opaque on purpose. react-native-view-shot
- * captures the view in isolation, so translucent glass would come out black
- * and a BlurView would come out blank — the card paints its own gradient
- * ground and carries its own branding so it still reads as TruthLens when it
- * lands in someone else's feed with no app around it.
+ * Everything inside `cardRef` is fully opaque in both modes — #201E1D on dark,
+ * #FFFFFF on light. react-native-view-shot captures the view in isolation, so
+ * translucent glass would come out black and a BlurView would come out blank.
+ * The card also carries its own brand row and rule, because it lands in
+ * someone else's feed with no app around it.
  */
 export default function ReportCardScreen() {
   const cardRef = useRef<View>(null);
+  const { t } = useLanguage();
+  const palette = usePalette();
   const { profile, loading } = useUserProfile();
   const { results } = useQuizResults();
   const { earnedIds } = useBadges();
@@ -52,76 +54,74 @@ export default function ReportCardScreen() {
   if (loading || !profile) {
     return (
       <Screen center>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={palette.accentBrand} />
       </Screen>
     );
   }
 
   const stats = [
-    { value: String(profile.xp), label: "XP" },
-    { value: `${completedLessons.length}/${lessons.length}`, label: "Lessons" },
-    { value: String(verificationCount), label: "Verified first" },
+    { value: String(completedLessons.length), label: t("profile.lessonsLabel") },
+    { value: String(verificationCount), label: t("reportCard.verifiedFirst") },
+    { value: profile.xp.toLocaleString(), label: t("reportCard.xp") },
   ];
 
   return (
     <Screen scroll>
       <FadeIn>
-        <View ref={cardRef} collapsable={false} style={styles.card}>
-          {/* Opaque ground — this is what makes the capture usable. */}
-          <LinearGradient
-            colors={[colors.backgroundLift, colors.background, "#0A1A2E"]}
-            locations={[0, 0.5, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.cardEdge} pointerEvents="none" />
+        <Overline style={styles.kicker}>{t("reportCard.preview")}</Overline>
 
+        <View
+          ref={cardRef}
+          collapsable={false}
+          style={[
+            styles.card,
+            { backgroundColor: palette.surfacePanel, borderColor: palette.lineHairline },
+          ]}
+        >
           <View style={styles.brandRow}>
-            <MaterialIcons name="center-focus-strong" size={18} color={colors.primary} />
-            <Overline color={colors.primary}>TruthLens AI</Overline>
+            <View style={styles.brand}>
+              <View style={[styles.mark, { borderColor: palette.accentBrand }]} />
+              <Overline color={palette.textPrimary}>TruthLens AI</Overline>
+            </View>
+            <Overline>AUG 2026</Overline>
           </View>
 
-          <Title style={styles.name}>{profile.name}'s MIL habits</Title>
+          <View style={[styles.accentRule, { backgroundColor: palette.accentBrand }]} />
 
-          <View style={styles.statsRow}>
+          <Title style={styles.name}>{t("reportCard.habitsTitle", { name: profile.name })}</Title>
+
+          {/* 1px gaps rather than gutters — the tiles read as one ruled block. */}
+          <View style={[styles.statsRow, { backgroundColor: palette.lineHairline }]}>
             {stats.map((stat) => (
-              <View key={stat.label} style={styles.stat}>
-                <Display color={colors.primary} style={styles.statValue}>
-                  {stat.value}
-                </Display>
-                <Caption center>{stat.label}</Caption>
+              <View
+                key={stat.label}
+                style={[styles.stat, { backgroundColor: palette.surfacePanel }]}
+              >
+                <Title style={styles.statValue}>{stat.value}</Title>
+                <Overline>{stat.label}</Overline>
               </View>
             ))}
           </View>
 
-          <View style={styles.badgesRow}>
+          <View style={styles.badgeRow}>
             {earnedBadges.length === 0 ? (
-              <Caption>No badges yet — this is the start.</Caption>
+              <Caption>{t("reportCard.noBadges")}</Caption>
             ) : (
-              earnedBadges.map((badge) => (
-                <View key={badge.id} style={styles.badgeItem}>
-                  <MaterialIcons name="military-tech" size={16} color={colors.warning} />
-                  <Caption color={colors.text}>{badge.name}</Caption>
-                </View>
-              ))
+              earnedBadges.map((badge) => <Pill key={badge.id} label={badge.name} />)
             )}
           </View>
 
-          <View style={styles.taglineRow}>
-            <View style={styles.taglineRule} />
-            <Body muted style={styles.tagline}>
-              Think before you share. Verify before you trust.
-            </Body>
-          </View>
+          <View style={[styles.footRule, { backgroundColor: palette.lineHairline }]} />
+          <Body muted>{t("reportCard.tagline")}</Body>
         </View>
       </FadeIn>
 
-      <FadeIn delay={motion.stagger}>
+      <FadeIn delay={motion.stagger} style={styles.actions}>
         <PrimaryButton
-          label="Share my habits"
+          label={t("reportCard.shareHabits")}
           onPress={shareCard}
-          icon="ios-share"
+          icon="arrow-forward"
+          iconTrailing
           accessibilityHint="Saves this card as an image and opens the share sheet"
         />
       </FadeIn>
@@ -130,77 +130,60 @@ export default function ReportCardScreen() {
 }
 
 const styles = StyleSheet.create({
+  kicker: {
+    marginBottom: spacing.md,
+  },
   card: {
     width: "100%",
-    borderRadius: radius.sheet,
-    padding: spacing.xl,
-    marginBottom: spacing.xl,
-    overflow: "hidden",
-    // Opaque fallback in case the gradient fails to paint during capture.
-    backgroundColor: colors.background,
-  },
-  cardEdge: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: radius.sheet,
     borderWidth: 1,
-    borderColor: colors.glassBorderStrong,
+    padding: spacing.xl - 2,
+    gap: spacing.lg + 2,
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
-    marginBottom: spacing.md,
+  },
+  mark: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+  },
+  accentRule: {
+    height: 2,
   },
   name: {
-    marginBottom: spacing.xl,
+    fontSize: 30,
+    lineHeight: 32,
   },
   statsRow: {
     flexDirection: "row",
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
+    gap: 1,
   },
   stat: {
     flex: 1,
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    borderRadius: radius.card,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm + 2,
+    gap: spacing.xs,
   },
   statValue: {
-    marginBottom: spacing.xs,
+    fontSize: 26,
   },
-  badgesRow: {
+  badgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
+    gap: spacing.sm - 2,
   },
-  badgeItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.warning + "44",
-    backgroundColor: "rgba(255, 179, 71, 0.10)",
-  },
-  taglineRow: {
-    gap: spacing.md,
-  },
-  taglineRule: {
+  footRule: {
     height: 1,
-    backgroundColor: colors.glassBorder,
   },
-  tagline: {
-    fontStyle: "italic",
+  actions: {
+    marginTop: spacing.xl,
   },
 });

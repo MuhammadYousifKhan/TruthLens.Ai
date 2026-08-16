@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  Easing,
-  Image,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { Alert, Animated, Easing, Image, StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import { analyzeImage } from "../utils/detector";
 import { uploadScanImageAsync } from "../firebase/storage";
 import { saveScanAndAwardXp } from "../firebase/scans";
@@ -24,39 +15,42 @@ import {
   Body,
   Caption,
   FadeIn,
-  GlassCard,
+  Heading,
+  Overline,
+  Pulse,
   Screen,
-  Title,
+  Subtitle,
   useReducedMotion,
 } from "../components";
-import { absoluteFill, colors, radius, spacing } from "../theme/theme";
+import { absoluteFill, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Analyzing">;
+
+const FRAME_HEIGHT = 302;
 
 /**
  * The waiting screen.
  *
  * Waiting is the worst moment in the flow, so it shows the actual image with a
- * scan line travelling over it and names each stage as it happens. Progress
- * you can read beats a spinner you can only stare at — and it makes the wait
- * feel like work being done on *your* image specifically.
+ * line travelling over it and names each stage as it happens. Progress you can
+ * read beats a spinner you can only stare at — and it makes the wait feel like
+ * work being done on *your* image specifically.
  */
 export default function AnalyzingScreen({ navigation, route }: Props) {
   const { imageUri } = route.params;
   const { user } = useAuth();
   const { t } = useLanguage();
+  const palette = usePalette();
+  const reducedMotion = useReducedMotion();
+
   const STAGES = [
     { label: t("analyzing.stage1Label"), detail: t("analyzing.stage1Detail") },
     { label: t("analyzing.stage2Label"), detail: t("analyzing.stage2Detail") },
     { label: t("analyzing.stage3Label"), detail: t("analyzing.stage3Detail") },
   ];
+
   const [stageIndex, setStageIndex] = useState(0);
   const started = useRef(false);
-  const reducedMotion = useReducedMotion();
-  const { width } = useWindowDimensions();
-
-  // The preview is square and sits inside the standard 24px gutter.
-  const frameSize = Math.min(width - spacing.xl * 2, 320);
   const sweep = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -101,7 +95,7 @@ export default function AnalyzingScreen({ navigation, route }: Props) {
       }
 
       setStageIndex(1);
-      const result = await analyzeImage(imageUri); // never throws — always resolves, mock or real
+      const result = await analyzeImage(imageUri); // never throws — mock or real
 
       setStageIndex(2);
       if (user) {
@@ -119,149 +113,156 @@ export default function AnalyzingScreen({ navigation, route }: Props) {
   }
 
   return (
-    <Screen center>
-      <FadeIn style={styles.centered}>
-        <View style={[styles.frame, { width: frameSize, height: frameSize }]}>
+    <Screen scroll>
+      <FadeIn>
+        <View
+          style={[
+            styles.frame,
+            { borderColor: palette.lineHairline, backgroundColor: palette.imagePlaceholder },
+          ]}
+        >
           <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          {/* Dim the photo so the scan line and the copy below stay dominant. */}
-          <View style={[StyleSheet.absoluteFill, styles.scrim]} pointerEvents="none" />
+          {/* Dim the photo so the line and the copy below stay dominant. */}
+          <View
+            style={[StyleSheet.absoluteFill, { backgroundColor: palette.surfaceBase, opacity: 0.45 }]}
+            pointerEvents="none"
+          />
 
           {!reducedMotion && (
             <Animated.View
               style={[
-                styles.scanLine,
+                styles.sweep,
                 {
+                  backgroundColor: palette.accentBrand,
                   transform: [
                     {
                       translateY: sweep.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0, frameSize - 3],
+                        outputRange: [4, FRAME_HEIGHT - 6],
                       }),
                     },
                   ],
                 },
               ]}
               pointerEvents="none"
-            >
-              <LinearGradient
-                colors={["transparent", colors.primary, "transparent"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.scanLineFill}
-              />
-            </Animated.View>
+            />
           )}
-
-          <View style={styles.frameEdge} pointerEvents="none" />
         </View>
+      </FadeIn>
 
-        <Title center style={styles.heading}>
-          {t("analyzing.heading")}
-        </Title>
-        <Caption center style={styles.subheading}>
-          {t("analyzing.subheading")}
-        </Caption>
+      <FadeIn delay={40}>
+        <Heading style={styles.heading}>{t("analyzing.heading")}</Heading>
+      </FadeIn>
 
-        <GlassCard style={styles.stages}>
+      <FadeIn delay={90}>
+        <View style={[styles.stages, { borderTopColor: palette.lineStrong }]}>
           {STAGES.map((stage, index) => {
             const done = index < stageIndex;
             const active = index === stageIndex;
+            const status = done
+              ? t("common.done")
+              : active
+              ? t("common.now")
+              : t("common.waiting");
+
             return (
               <View
                 key={stage.label}
-                style={[styles.stageRow, index < STAGES.length - 1 && styles.stageDivider]}
+                style={[
+                  styles.stageRow,
+                  { borderBottomColor: palette.lineHairline },
+                  !done && !active && styles.stageWaiting,
+                ]}
                 accessibilityRole="text"
-                accessibilityLabel={`${stage.label}. ${
-                  done ? "Complete" : active ? "In progress" : "Waiting"
-                }`}
+                accessibilityLabel={`${stage.label}. ${status}`}
               >
-                <View style={styles.stageIcon}>
-                  {done ? (
-                    <MaterialIcons name="check-circle" size={20} color={colors.success} />
-                  ) : active ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <MaterialIcons
-                      name="radio-button-unchecked"
-                      size={20}
-                      color={colors.textFaint}
-                    />
-                  )}
-                </View>
+                {done ? (
+                  <View style={[styles.marker, { backgroundColor: palette.statusAuthentic }]}>
+                    <MaterialIcons name="check" size={14} color={palette.statusAuthenticOn} />
+                  </View>
+                ) : active ? (
+                  <Pulse>
+                    <View style={[styles.markerOutline, { borderColor: palette.accentBrand }]} />
+                  </Pulse>
+                ) : (
+                  <View
+                    style={[styles.markerOutlineThin, { borderColor: palette.lineStrong }]}
+                  />
+                )}
+
                 <View style={styles.stageCopy}>
-                  <Body color={done || active ? colors.text : colors.textFaint}>
-                    {stage.label}
-                  </Body>
+                  <Subtitle>{stage.label}</Subtitle>
                   {active && <Caption>{stage.detail}</Caption>}
                 </View>
+
+                <Overline color={active ? palette.accentBrand : palette.textTertiary}>
+                  {status}
+                </Overline>
               </View>
             );
           })}
-        </GlassCard>
+        </View>
+      </FadeIn>
+
+      <FadeIn delay={140}>
+        <Caption style={styles.footnote}>{t("analyzing.subheading")}</Caption>
       </FadeIn>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    alignItems: "center",
-  },
   frame: {
-    borderRadius: radius.hero,
+    width: "100%",
+    height: FRAME_HEIGHT,
+    borderWidth: 1,
     overflow: "hidden",
-    backgroundColor: colors.glassSunken,
     marginBottom: spacing.xl,
   },
-  scrim: {
-    backgroundColor: "rgba(4, 6, 15, 0.45)",
-  },
-  frameEdge: {
-    ...absoluteFill,
-    borderRadius: radius.hero,
-    borderWidth: 1,
-    borderColor: colors.glassBorderStrong,
-  },
-  scanLine: {
+  sweep: {
     position: "absolute",
     left: 0,
     right: 0,
-    height: 3,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
-  },
-  scanLineFill: {
-    flex: 1,
+    height: 2,
   },
   heading: {
-    marginBottom: spacing.xs,
-  },
-  subheading: {
     marginBottom: spacing.xl,
   },
   stages: {
-    width: "100%",
-    paddingHorizontal: spacing.lg,
+    borderTopWidth: 2,
   },
   stageRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  stageDivider: {
+    gap: spacing.md + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.glassBorder,
+    paddingVertical: spacing.lg,
   },
-  stageIcon: {
-    width: 20,
+  stageWaiting: {
+    opacity: 0.55,
+  },
+  marker: {
+    width: 22,
+    height: 22,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  markerOutline: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+  },
+  markerOutlineThin: {
+    width: 22,
+    height: 22,
+    borderWidth: 1,
   },
   stageCopy: {
     flex: 1,
     gap: 2,
+  },
+  footnote: {
+    marginTop: spacing.xl,
+    maxWidth: 340,
   },
 });

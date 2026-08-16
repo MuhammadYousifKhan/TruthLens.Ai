@@ -1,81 +1,61 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { AuroraBackground, Body, Hero, useReducedMotion } from "../components";
-import { absoluteFill, colors, radius, spacing } from "../theme/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FieldBackground, Hero, Overline, Rule, useReducedMotion } from "../components";
+import { usePalette } from "../theme/ThemeContext";
+import { spacing } from "../theme/theme";
 
 /**
- * First frame of the app. It holds for ~1.5s while auth resolves, which is
- * long enough that a static logo would feel like a stall — so the lens mark
- * draws itself in and a ring sweeps once around it, turning dead wait time
- * into something that reads as the app focusing.
+ * First frame of the app, and the first frame of the pitch video.
  *
- * This renders outside the navigator, so it composes AuroraBackground directly
+ * It holds still. The old rotating lit-quadrant ring drew attention to the
+ * wait; a mark that scales 0.94 to 1 once over 420ms and then stops reads as
+ * the app arriving rather than the app loading.
+ *
+ * The wordmark parks bottom-left above a rule, so the composition is a title
+ * block on a sheet rather than a logo centred in space.
+ *
+ * This renders outside the navigator, so it composes FieldBackground directly
  * rather than going through Screen.
  */
 export default function SplashScreen() {
+  const t = usePalette();
+  const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const enter = useRef(new Animated.Value(0)).current;
-  const sweep = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const entrance = Animated.timing(enter, {
       toValue: 1,
-      duration: reducedMotion ? 200 : 700,
+      duration: reducedMotion ? 160 : 420,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
     entrance.start();
-
-    if (reducedMotion) return () => entrance.stop();
-
-    const rotation = Animated.loop(
-      Animated.timing(sweep, {
-        toValue: 1,
-        duration: 3600,
-        easing: Easing.linear, // linear is correct for a continuous loop
-        useNativeDriver: true,
-      })
-    );
-    rotation.start();
-
-    return () => {
-      entrance.stop();
-      rotation.stop();
-    };
-  }, [enter, sweep, reducedMotion]);
+    return () => entrance.stop();
+  }, [enter, reducedMotion]);
 
   return (
     <View style={styles.root}>
-      <AuroraBackground />
+      <FieldBackground grid wash="topRight" />
 
-      <View style={styles.center}>
+      <View
+        style={[
+          styles.block,
+          { paddingBottom: insets.bottom + 72, paddingHorizontal: spacing.xl },
+        ]}
+      >
         <Animated.View
           style={{
             opacity: enter,
             transform: [
-              { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) },
+              { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
             ],
           }}
         >
-          <View style={styles.mark}>
-            {/* The sweeping arc: a ring with one lit quadrant, rotating. */}
-            <Animated.View
-              style={[
-                styles.sweepRing,
-                {
-                  transform: [
-                    {
-                      rotate: sweep.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ["0deg", "360deg"],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            />
-            <MaterialIcons name="center-focus-strong" size={44} color={colors.primary} />
+          {/* A square aperture: an outlined frame with a solid core. */}
+          <View style={[styles.mark, { borderColor: t.accentBrand }]}>
+            <View style={[styles.markCore, { backgroundColor: t.accentBrand }]} />
           </View>
         </Animated.View>
 
@@ -83,61 +63,50 @@ export default function SplashScreen() {
           style={{
             opacity: enter,
             transform: [
-              { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+              { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
             ],
           }}
         >
-          <Hero center style={styles.wordmark}>
-            TruthLens AI
+          <Rule strong style={styles.rule} />
+          <Hero>
+            {"TRUTH\nLENS "}
+            <Hero color={t.accentBrand}>AI</Hero>
           </Hero>
-          <Body center muted>
+          <Overline color={t.textSecondary} style={styles.tagline}>
             Think before you share
-          </Body>
+          </Overline>
         </Animated.View>
       </View>
     </View>
   );
 }
 
-const MARK_SIZE = 116;
+const MARK_SIZE = 76;
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
   },
-  center: {
+  block: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xl,
+    justifyContent: "flex-end",
+    gap: spacing.xl,
   },
   mark: {
     width: MARK_SIZE,
     height: MARK_SIZE,
-    borderRadius: radius.pill,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
+  },
+  markCore: {
+    width: 22,
+    height: 22,
+  },
+  rule: {
     marginBottom: spacing.xl,
-    // Emitted light, not a cast shadow.
-    shadowColor: colors.primary,
-    shadowOpacity: 0.4,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
   },
-  sweepRing: {
-    ...absoluteFill,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    // Only the top edge is lit, so rotation reads as a sweep around the lens.
-    borderColor: "transparent",
-    borderTopColor: colors.primary,
-  },
-  wordmark: {
-    marginBottom: spacing.sm,
+  tagline: {
+    marginTop: spacing.lg,
   },
 });

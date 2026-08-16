@@ -25,12 +25,21 @@
     "errorEmailInUse": "اس ای میل سے پہلے سے اکاؤنٹ موجود ہے۔",
     "errorWeakPassword": "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔",
     "errorNetworkFailed": "اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
-    "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
+    "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
+    "kickerLogin": "سائن ان",
+    "kickerSignup": "اکاؤنٹ بنائیں",
+    "titleLogin": "خوش آمدید",
+    "titleSignup": "میڈیا پڑھنا\nسیکھیں۔",
+    "newHere": "نئے ہیں؟",
+    "haveAccount": "پہلے سے اکاؤنٹ ہے؟",
+    "linkSignup": "اکاؤنٹ بنائیں",
+    "linkLogin": "لاگ ان کریں"
   },
   "headerMenu": {
     "profileSettings": "پروفائل ترتیبات",
     "language": "زبان",
-    "logout": "لاگ آؤٹ"
+    "logout": "لاگ آؤٹ",
+    "appearance": "ظاہری شکل"
   },
   "nav": {
     "dashboard": "TruthLens AI",
@@ -39,7 +48,14 @@
     "guide": "حقائق جانچنے کی رہنمائی",
     "pause": "شیئر کرنے سے پہلے سوچیں",
     "deepfakeHelp": "اگر یہ ڈیپ فیک ہے",
-    "game": "جعلی پہچانیں"
+    "game": "جعلی پہچانیں",
+    "learn": "اسباق",
+    "lesson": "سبق",
+    "quiz": "کوئز",
+    "quizResult": "کوئز نتیجہ",
+    "achievements": "بیجز",
+    "profile": "پروفائل",
+    "reportCard": "میری MIL عادات"
   },
   "dashboard": {
     "loading": "لوڈ ہو رہا ہے",
@@ -61,15 +77,26 @@
     "cardProfileLabel": "پروفائل",
     "cardProfileHint": "اسکینز اور اعداد و شمار",
     "cardDeepfakeLabel": "اگر یہ ڈیپ فیک ہے",
-    "cardDeepfakeHint": "مدد حاصل کریں"
+    "cardDeepfakeHint": "مدد حاصل کریں",
+    "xpLabel": "حاصل کردہ XP",
+    "scanKicker": "یہاں سے شروع کریں"
   },
   "scan": {
     "prompt": "آپ کیا جانچ رہے ہیں؟",
-    "lede": "اپنی فیڈ سے کوئی تصویر یا اسکرین شاٹ اپ لوڈ کریں۔",
+    "lede": "تصویر لیں، یا اپنی فیڈ سے کوئی اسکرین شاٹ اپ لوڈ کریں۔",
     "dropLabel": "تصویر اپ لوڈ کرنے کے لیے ٹیپ کریں",
     "dropHint": "آپ کی لائبریری سے JPG یا PNG",
     "analyze": "تصویر کا تجزیہ کریں",
-    "chooseDifferent": "دوسری تصویر منتخب کریں"
+    "chooseDifferent": "دوسری تصویر منتخب کریں",
+    "takePhoto": "تصویر لیں",
+    "retake": "نئی تصویر لیں",
+    "upload": "لائبریری سے اپ لوڈ کریں",
+    "permissionTitle": "اجازت درکار ہے",
+    "libraryPermission": "تصویر اپ لوڈ کرنے کے لیے فوٹو لائبریری تک رسائی کی اجازت دیں۔",
+    "cameraPermission": "تصویر لینے کے لیے کیمرے تک رسائی کی اجازت دیں۔",
+    "kicker": "اسکین",
+    "pasteLink": "لنک پیسٹ کریں",
+    "fileHint": "JPG · PNG · 10 MB تک"
   },
   "analyzing": {
     "heading": "اس تصویر کی جانچ ہو رہی ہے",
@@ -101,7 +128,11 @@
     "deepfakeCta": "کیا یہ آپ کے کسی جاننے والے کا ڈیپ فیک ہے؟",
     "learnHow": "اسے تصدیق کرنے کا طریقہ سیکھیں",
     "share": "شیئر کریں",
-    "scanAnother": "دوسری تصویر اسکین کریں"
+    "scanAnother": "دوسری تصویر اسکین کریں",
+    "bandAuthentic": "اصلی",
+    "bandUncertain": "غیر یقینی",
+    "bandAi": "ممکنہ AI",
+    "estimateKicker": "تخمینہ"
   },
   "guide": {
     "checklistLabel": "تصدیقی چیک لسٹ",
@@ -131,7 +162,8 @@
         "title": "فیصلہ کریں کہ شیئر کرنا ہے یا نہیں",
         "body": "اگر ذریعہ چیک کرنے، تصویر سرچ کرنے، اور تاریخ کی تصدیق کے بعد بھی آپ غیر یقینی ہیں، تو اسے شیئر نہ کریں۔ شک کی صورت میں، رکنا ہی بہتر ہے۔"
       }
-    ]
+    ],
+    "fiveChecks": "پانچ جانچیں"
   },
   "pause": {
     "title": "رکیں۔",
@@ -147,7 +179,8 @@
     "waiting": "انتظار کریں…",
     "cooldownNote": "سانس لیں — شیئرنگ تھوڑی دیر میں کھلے گی",
     "practiceNote": "پریکٹس موڈ — واقعی شیئر کرنے کے لیے پہلے کوئی تصویر اسکین کریں۔",
-    "scanAnImage": "تصویر اسکین کریں"
+    "scanAnImage": "تصویر اسکین کریں",
+    "unlocksIn": "شیئر {{n}} سیکنڈ میں کھلے گا"
   },
   "deepfakeHelp": {
     "intro": "پہلے چند منٹوں میں یہ کریں۔",
@@ -191,6 +224,81 @@
     "nextImage": "اگلی تصویر",
     "seeResults": "نتائج دیکھیں",
     "streakInARow": "لگاتار {{n}}",
-    "ofCount": "{{total}} میں سے {{current}}"
+    "ofCount": "{{total}} میں سے {{current}}",
+    "theTell": "نشانی",
+    "round": "راؤنڈ"
+  },
+  "appearance": {
+    "sectionLabel": "ظاہری شکل",
+    "system": "سسٹم",
+    "light": "روشن",
+    "dark": "گہرا",
+    "systemA11y": "سسٹم کی ترتیب کے مطابق"
+  },
+  "common": {
+    "back": "واپس",
+    "locked": "بند",
+    "earned": "حاصل",
+    "done": "مکمل",
+    "now": "ابھی",
+    "waiting": "انتظار",
+    "missed": "رہ گیا",
+    "correct": "درست"
+  },
+  "learn": {
+    "progress": "آپ کی پیش رفت",
+    "lessonsCount": "/ {{total}} اسباق",
+    "upNext": "اگلا"
+  },
+  "profile": {
+    "verificationHabits": "تصدیق کی عادات",
+    "totalXp": "XP",
+    "lessonsLabel": "اسباق",
+    "badgesLabel": "بیجز {{done}} / {{total}}",
+    "shareHabits": "میری MIL عادات شیئر کریں",
+    "logOut": "لاگ آؤٹ",
+    "quizScores": "کوئز اسکور",
+    "noQuizzes": "ابھی کوئی کوئز مکمل نہیں ہوا۔",
+    "habitsEmpty": "آپ نے ابھی تک شیئر کرنے سے پہلے تصدیق نہیں کی — اگلی بار پاز اسکرین آزمائیں۔",
+    "habitsCount": "آپ نے {{n}} بار شیئر کرنے سے پہلے تصدیق کی۔ یہ سلسلہ جاری رکھیں۔"
+  },
+  "reportCard": {
+    "preview": "پیش نظارہ · قابلِ اشتراک",
+    "habitsTitle": "{{name}} کی MIL عادات",
+    "scans": "اسکینز",
+    "verifiedFirst": "پہلے تصدیق کی",
+    "xp": "XP",
+    "tagline": "میں شیئر کرنے سے پہلے جانچتا ہوں۔ truthlens.ai",
+    "shareHabits": "میری عادات شیئر کریں",
+    "noBadges": "ابھی کوئی بیج نہیں — یہ آغاز ہے۔"
+  },
+  "achievements": {
+    "earnedFor": "تصدیق پر حاصل",
+    "badgesCount": "/ {{total}} بیجز",
+    "footnote": "بیجز تصدیق کا انعام ہیں، ایپ میں وقت گزارنے کا نہیں۔"
+  },
+  "quiz": {
+    "questionOf": "سوال {{current}} / {{total}}",
+    "nextQuestion": "اگلا سوال",
+    "seeResults": "نتائج دیکھیں",
+    "backToLessons": "اسباق پر واپس",
+    "retake": "کوئز دوبارہ دیں",
+    "passed": "کامیاب",
+    "notQuite": "بالکل نہیں — دوبارہ کوشش کریں",
+    "keepXp": "آپ کے حاصل کردہ {{xp}} XP محفوظ ہیں۔ سبق دوبارہ پڑھ کر جب چاہیں کوشش کریں۔",
+    "alreadyEarned": "آپ اس سبق کے XP پہلے حاصل کر چکے ہیں۔",
+    "noQuestions": "اس سبق کے لیے کوئی سوال نہیں ملا۔"
+  },
+  "lesson": {
+    "takeQuiz": "کوئز دیں",
+    "notFound": "سبق نہیں ملا۔",
+    "minutes": "{{n}} منٹ",
+    "xpValue": "{{n}} XP"
+  },
+  "placeholder": {
+    "kicker": "ابھی نہیں بنا",
+    "title": "یہ اسکرین زیرِ تعمیر ہے۔",
+    "body": "شپ شدہ بلڈ میں یہاں کچھ نہیں جاتا۔",
+    "goBack": "واپس جائیں"
   }
 }

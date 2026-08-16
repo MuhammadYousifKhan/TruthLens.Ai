@@ -25,12 +25,21 @@
     "errorEmailInUse": "An account already exists with that email.",
     "errorWeakPassword": "Password should be at least 6 characters.",
     "errorNetworkFailed": "Check your connection and try again.",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "kickerLogin": "Sign in",
+    "kickerSignup": "Create account",
+    "titleLogin": "Welcome\nback.",
+    "titleSignup": "Learn to\nread media.",
+    "newHere": "New here?",
+    "haveAccount": "Already have an account?",
+    "linkSignup": "Create an account",
+    "linkLogin": "Log in"
   },
   "headerMenu": {
     "profileSettings": "Profile settings",
     "language": "Language",
-    "logout": "Log out"
+    "logout": "Log out",
+    "appearance": "Appearance"
   },
   "nav": {
     "dashboard": "TruthLens AI",
@@ -39,7 +48,14 @@
     "guide": "Fact-Checking Guide",
     "pause": "Think Before You Share",
     "deepfakeHelp": "If It's a Deepfake",
-    "game": "Spot the Fake"
+    "game": "Spot the Fake",
+    "learn": "Lessons",
+    "lesson": "Lesson",
+    "quiz": "Quiz",
+    "quizResult": "Quiz result",
+    "achievements": "Badges",
+    "profile": "Profile",
+    "reportCard": "My MIL habits"
   },
   "dashboard": {
     "loading": "Loading",
@@ -61,15 +77,26 @@
     "cardProfileLabel": "Profile",
     "cardProfileHint": "Scans & stats",
     "cardDeepfakeLabel": "If it's a deepfake",
-    "cardDeepfakeHint": "Get support"
+    "cardDeepfakeHint": "Get support",
+    "xpLabel": "XP earned",
+    "scanKicker": "Start here"
   },
   "scan": {
     "prompt": "What are you checking?",
-    "lede": "Upload a photo or a screenshot from your feed.",
+    "lede": "Take a photo, or upload a screenshot from your feed.",
     "dropLabel": "Tap to upload an image",
     "dropHint": "JPG or PNG, from your library",
     "analyze": "Analyze image",
-    "chooseDifferent": "Choose a different image"
+    "chooseDifferent": "Choose a different image",
+    "takePhoto": "Take a photo",
+    "retake": "Take a new photo",
+    "upload": "Upload from library",
+    "permissionTitle": "Permission needed",
+    "libraryPermission": "Allow photo library access to upload an image.",
+    "cameraPermission": "Allow camera access to take a photo.",
+    "kicker": "Scan",
+    "pasteLink": "Paste a link",
+    "fileHint": "JPG · PNG · up to 10 MB"
   },
   "analyzing": {
     "heading": "Checking this image",
@@ -101,7 +128,11 @@
     "deepfakeCta": "Is this a deepfake of someone you know?",
     "learnHow": "Learn how to verify this",
     "share": "Share",
-    "scanAnother": "Scan another image"
+    "scanAnother": "Scan another image",
+    "bandAuthentic": "Authentic",
+    "bandUncertain": "Uncertain",
+    "bandAi": "Likely AI",
+    "estimateKicker": "Estimate"
   },
   "guide": {
     "checklistLabel": "Verification checklist",
@@ -131,7 +162,8 @@
         "title": "Decide whether to share",
         "body": "If you're still unsure after checking the source, searching the image, and verifying the date, don't share it. When in doubt, sit it out."
       }
-    ]
+    ],
+    "fiveChecks": "Five checks"
   },
   "pause": {
     "title": "Pause.",
@@ -147,7 +179,8 @@
     "waiting": "Waiting…",
     "cooldownNote": "Take a breath — sharing unlocks in a moment",
     "practiceNote": "Practice mode — scan an image first to actually share it.",
-    "scanAnImage": "Scan an image"
+    "scanAnImage": "Scan an image",
+    "unlocksIn": "Share unlocks in {{n}}s"
   },
   "deepfakeHelp": {
     "intro": "Here's what to do in the first few minutes.",
@@ -191,6 +224,81 @@
     "nextImage": "Next image",
     "seeResults": "See results",
     "streakInARow": "{{n}} in a row",
-    "ofCount": "{{current}} of {{total}}"
+    "ofCount": "{{current}} of {{total}}",
+    "theTell": "The tell",
+    "round": "Round"
+  },
+  "appearance": {
+    "sectionLabel": "Appearance",
+    "system": "SYS",
+    "light": "LIGHT",
+    "dark": "DARK",
+    "systemA11y": "Follow system setting"
+  },
+  "common": {
+    "back": "Back",
+    "locked": "Locked",
+    "earned": "Earned",
+    "done": "Done",
+    "now": "Now",
+    "waiting": "Waiting",
+    "missed": "Missed",
+    "correct": "Correct"
+  },
+  "learn": {
+    "progress": "Your progress",
+    "lessonsCount": "/ {{total}} lessons",
+    "upNext": "Up next"
+  },
+  "profile": {
+    "verificationHabits": "Verification habits",
+    "totalXp": "XP",
+    "lessonsLabel": "Lessons",
+    "badgesLabel": "Badges {{done}} / {{total}}",
+    "shareHabits": "Share my MIL habits",
+    "logOut": "Log out",
+    "quizScores": "Quiz scores",
+    "noQuizzes": "No quizzes completed yet.",
+    "habitsEmpty": "You haven't verified before sharing yet — try the Pause screen next time you scan something.",
+    "habitsCount": "You've verified before sharing {{n}} times. Keep it up."
+  },
+  "reportCard": {
+    "preview": "Preview · shareable",
+    "habitsTitle": "{{name}}'s MIL habits",
+    "scans": "Scans",
+    "verifiedFirst": "Verified first",
+    "xp": "XP",
+    "tagline": "I check before I share. truthlens.ai",
+    "shareHabits": "Share my habits",
+    "noBadges": "No badges yet — this is the start."
+  },
+  "achievements": {
+    "earnedFor": "Earned for verifying",
+    "badgesCount": "/ {{total}} badges",
+    "footnote": "Badges reward verification, not time in the app. Nothing here counts minutes."
+  },
+  "quiz": {
+    "questionOf": "Question {{current}} / {{total}}",
+    "nextQuestion": "Next question",
+    "seeResults": "See results",
+    "backToLessons": "Back to lessons",
+    "retake": "Retake the quiz",
+    "passed": "Passed",
+    "notQuite": "Not quite — try again",
+    "keepXp": "You keep the {{xp}} XP you earned. Re-read the lesson and take it again whenever you like.",
+    "alreadyEarned": "You've already earned XP for this lesson.",
+    "noQuestions": "No quiz questions found for this lesson."
+  },
+  "lesson": {
+    "takeQuiz": "Take the quiz",
+    "notFound": "Lesson not found.",
+    "minutes": "{{n}} min",
+    "xpValue": "{{n}} XP"
+  },
+  "placeholder": {
+    "kicker": "Not built yet",
+    "title": "This screen is scaffolding.",
+    "body": "Nothing routes here in the shipped build.",
+    "goBack": "Go back"
   }
 }

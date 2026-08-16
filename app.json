@@ -5,14 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#070B18",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#1A1817",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#070B18",
+        "backgroundColor": "#1A1817",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -26,14 +26,23 @@
       "expo-web-browser",
       "expo-sharing",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow TruthLens to open a photo you want to check.",
+          "cameraPermission": "Allow TruthLens to take a photo you want to check.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "backgroundColor": "#070B18",
+          "backgroundColor": "#1A1817",
           "image": "./assets/splash-icon.png",
           "imageWidth": 180
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-font"
     ]
   }
 }

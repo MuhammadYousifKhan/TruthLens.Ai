@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
-import { DarkTheme, NavigationContainer, type Theme } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  type Theme,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "./types";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
-import { ProfileHeaderMenu } from "../components";
+import { useTheme } from "../theme/ThemeContext";
 import SplashScreen from "../screens/SplashScreen";
 import LoginScreen from "../screens/LoginScreen";
 import DashboardScreen from "../screens/DashboardScreen";
@@ -23,35 +28,49 @@ import QuizResultScreen from "../screens/QuizResultScreen";
 import AchievementsScreen from "../screens/AchievementsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import ReportCardScreen from "../screens/ReportCardScreen";
-import { colors, fontSize } from "../theme/theme";
+import { fontFamily, fontSize, letterSpacing } from "../theme/theme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const SPLASH_MIN_MS = 1500;
 
-// Navigation's own theme, so the frames it draws between screens during a
-// transition match the aurora ground instead of flashing white.
-const navigationTheme: Theme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    primary: colors.primary,
-    background: colors.background,
-    card: "transparent",
-    text: colors.text,
-    border: colors.glassBorder,
-    notification: colors.danger,
-  },
-};
-
 export default function RootNavigator() {
   const { user, initializing } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { palette, mode } = useTheme();
   const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMinTimeElapsed(true), SPLASH_MIN_MS);
     return () => clearTimeout(timer);
   }, []);
+
+  // Navigation's own theme, so the frames it draws between screens during a
+  // transition match the ruled field instead of flashing the wrong ground.
+  const navigationTheme = useMemo<Theme>(() => {
+    const base = mode === "dark" ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: palette.accentBrand,
+        background: palette.surfaceBase,
+        card: "transparent",
+        text: palette.textPrimary,
+        border: palette.lineHairline,
+        notification: palette.statusAi,
+      },
+    };
+  }, [mode, palette]);
+
+  // Header titles are set as overlines: small, heavy, wide-tracked. Urdu drops
+  // the uppercasing and the tracking, which neither language-shares.
+  const urdu = language === "ur";
+  const headerTitleStyle = {
+    color: palette.textPrimary,
+    fontFamily: urdu ? fontFamily.urduBold : fontFamily.extrabold,
+    fontSize: fontSize.micro,
+    letterSpacing: urdu ? 0 : letterSpacing.overline,
+  };
 
   if (initializing || !minTimeElapsed) {
     return <SplashScreen />;
@@ -61,26 +80,23 @@ export default function RootNavigator() {
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
-          // Transparent headers let the aurora run to the top edge and let
+          // Transparent headers let the field run to the top edge and let
           // content scroll underneath. Each screen reserves its own top inset
           // via the Screen component.
           headerTransparent: true,
           headerStyle: { backgroundColor: "transparent" },
           headerShadowVisible: false,
-          headerTintColor: colors.primary,
-          // native-stack only accepts fontSize/fontWeight/fontFamily/color here,
-          // so header titles cannot carry the scale's tracking.
-          headerTitleStyle: {
-            color: colors.text,
-            fontSize: fontSize.subtitle,
-            fontWeight: "600",
-          },
-          // iOS gets a real frosted header for free; Android reads it as
-          // transparent over the aurora, which looks correct either way.
+          headerTintColor: palette.textSecondary,
+          headerTitleStyle,
           ...(Platform.OS === "ios"
-            ? { headerBlurEffect: "systemUltraThinMaterialDark" as const }
+            ? {
+                headerBlurEffect:
+                  mode === "dark"
+                    ? ("systemUltraThinMaterialDark" as const)
+                    : ("systemUltraThinMaterialLight" as const),
+              }
             : null),
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: palette.surfaceBase },
           animation: "slide_from_right",
           animationDuration: 320,
         }}
@@ -97,13 +113,15 @@ export default function RootNavigator() {
               name="Dashboard"
               component={DashboardScreen}
               options={{
-                title: t("nav.dashboard"),
-                headerBackVisible: false,
+                headerShown: false,
                 animation: "fade",
-                headerRight: () => <ProfileHeaderMenu />,
               }}
             />
-            <Stack.Screen name="Scan" component={ScanScreen} options={{ title: t("nav.scan") }} />
+            <Stack.Screen
+              name="Scan"
+              component={ScanScreen}
+              options={{ title: t("nav.scan").toUpperCase() }}
+            />
             <Stack.Screen
               name="Analyzing"
               component={AnalyzingScreen}
@@ -114,42 +132,54 @@ export default function RootNavigator() {
             <Stack.Screen
               name="Result"
               component={ResultScreen}
-              options={{ title: t("nav.result"), animation: "fade_from_bottom" }}
+              options={{ title: t("nav.result").toUpperCase(), animation: "fade_from_bottom" }}
             />
             <Stack.Screen
               name="Guide"
               component={GuideScreen}
-              options={{ title: t("nav.guide") }}
+              options={{ title: t("nav.guide").toUpperCase() }}
             />
             <Stack.Screen
               name="Pause"
               component={PauseScreen}
               // Rises from the bottom like a sheet — it interrupts the share,
               // so it should feel like it landed on top of the flow.
-              options={{ title: t("nav.pause"), animation: "slide_from_bottom" }}
+              options={{ title: t("nav.pause").toUpperCase(), animation: "slide_from_bottom" }}
             />
             <Stack.Screen
               name="DeepfakeHelp"
               component={DeepfakeHelpScreen}
-              options={{ title: t("nav.deepfakeHelp") }}
+              options={{ title: t("nav.deepfakeHelp").toUpperCase() }}
             />
-            <Stack.Screen name="Game" component={GameScreen} options={{ title: t("nav.game") }} />
-            <Stack.Screen name="Learn" component={LearnHubScreen} options={{ title: "Learn Hub" }} />
+            <Stack.Screen
+              name="Game"
+              component={GameScreen}
+              options={{ title: t("nav.game").toUpperCase() }}
+            />
+            <Stack.Screen
+              name="Learn"
+              component={LearnHubScreen}
+              options={{ title: t("nav.learn").toUpperCase() }}
+            />
             <Stack.Screen
               name="LessonDetail"
               component={LessonDetailScreen}
-              options={{ title: "Lesson" }}
+              options={{ title: t("nav.lesson").toUpperCase() }}
             />
             <Stack.Screen
               name="Quiz"
               component={QuizScreen}
-              options={{ title: "Quiz", headerBackVisible: false, gestureEnabled: false }}
+              options={{
+                title: t("nav.quiz").toUpperCase(),
+                headerBackVisible: false,
+                gestureEnabled: false,
+              }}
             />
             <Stack.Screen
               name="QuizResult"
               component={QuizResultScreen}
               options={{
-                title: "Quiz Result",
+                title: t("nav.quizResult").toUpperCase(),
                 headerBackVisible: false,
                 gestureEnabled: false,
                 animation: "fade_from_bottom",
@@ -158,13 +188,17 @@ export default function RootNavigator() {
             <Stack.Screen
               name="Achievements"
               component={AchievementsScreen}
-              options={{ title: "Achievements" }}
+              options={{ title: t("nav.achievements").toUpperCase() }}
             />
-            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: "Profile" }} />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: t("nav.profile").toUpperCase() }}
+            />
             <Stack.Screen
               name="ReportCard"
               component={ReportCardScreen}
-              options={{ title: "My MIL Habits" }}
+              options={{ title: t("nav.reportCard").toUpperCase() }}
             />
           </>
         )}

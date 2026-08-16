@@ -2,159 +2,144 @@ import { StyleSheet, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { badges } from "../data/badges";
 import { useBadges } from "../hooks/useBadges";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   BlurCard,
   Body,
   Caption,
   FadeIn,
-  GlassCard,
   Meter,
+  Numeral,
+  Overline,
   Screen,
-  Subtitle,
   Title,
+  useResponsive,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { spacing } from "../theme/theme";
 
+/**
+ * The badge grid.
+ *
+ * A 1px-gap grid so the tiles read as one ruled block rather than as floating
+ * cards. Earned badges sit on filled amber; locked ones on a dashed square
+ * with a padlock — the state is stated, never implied by opacity alone.
+ */
 export default function AchievementsScreen() {
   const { earnedIds } = useBadges();
+  const { t } = useLanguage();
+  const palette = usePalette();
+  const { gridColumns } = useResponsive();
+
   const earnedCount = badges.filter((badge) => earnedIds.has(badge.id)).length;
   const ratio = badges.length > 0 ? earnedCount / badges.length : 0;
 
   return (
     <Screen scroll>
       <FadeIn>
-        <BlurCard style={styles.summary} tone="strong">
-          <View style={styles.summaryHeader}>
-            <View style={styles.summaryCopy}>
-              <Caption>Badges earned</Caption>
-              <Title style={styles.summaryTitle}>
-                {earnedCount} of {badges.length}
-              </Title>
-            </View>
-            <View style={styles.summaryChip}>
-              <MaterialIcons name="emoji-events" size={22} color={colors.warning} />
-            </View>
+        <BlurCard style={styles.hero} tone="strong">
+          <Overline>{t("achievements.earnedFor")}</Overline>
+          <View style={styles.countRow}>
+            <Numeral>{earnedCount}</Numeral>
+            <Title color={palette.textSecondary} style={styles.countTotal}>
+              {t("achievements.badgesCount", { total: badges.length })}
+            </Title>
           </View>
           <Meter
             value={ratio}
-            tone={colors.warning}
+            tone={palette.statusUncertain}
             animateIn
-            style={styles.summaryMeter}
             accessibilityLabel={`${earnedCount} of ${badges.length} badges earned`}
           />
         </BlurCard>
       </FadeIn>
 
-      <View style={styles.grid}>
-        {badges.map((badge, index) => {
-          const earned = earnedIds.has(badge.id);
-          return (
-            <FadeIn
-              key={badge.id}
-              delay={motion.stagger * (1 + index)}
-              style={styles.gridItem}
-            >
-              <GlassCard
-                style={[styles.card, !earned && styles.cardLocked]}
-                accent={earned ? colors.warning : undefined}
-                highlight={earned}
+      <FadeIn delay={60}>
+        <View style={[styles.grid, { backgroundColor: palette.lineHairline, borderColor: palette.lineHairline }]}>
+          {badges.map((badge) => {
+            const earned = earnedIds.has(badge.id);
+            return (
+              <View
+                key={badge.id}
+                accessibilityLabel={`${badge.name}. ${
+                  earned ? t("common.earned") : t("common.locked")
+                }`}
+                style={[
+                  styles.tile,
+                  {
+                    backgroundColor: palette.surfaceBase,
+                    width: gridColumns === 1 ? "100%" : "49.8%",
+                  },
+                ]}
               >
                 <View
                   style={[
-                    styles.badgeChip,
-                    { borderColor: earned ? colors.warning + "55" : colors.glassBorder },
+                    styles.mark,
+                    earned
+                      ? { backgroundColor: palette.statusUncertain }
+                      : { borderWidth: 1, borderStyle: "dashed", borderColor: palette.lineStrong },
                   ]}
                 >
-                  {/* Locked badges show a padlock, not a dimmed trophy — the
-                      state is stated, not merely implied by opacity. */}
                   <MaterialIcons
                     name={earned ? "military-tech" : "lock-outline"}
-                    size={30}
-                    color={earned ? colors.warning : colors.textFaint}
+                    size={17}
+                    color={earned ? palette.statusUncertainOn : palette.textSecondary}
                   />
                 </View>
 
-                <Subtitle center color={earned ? colors.text : colors.textMuted}>
-                  {badge.name}
-                </Subtitle>
-                <Body
-                  center
-                  color={earned ? colors.textMuted : colors.textFaint}
-                  style={styles.description}
-                >
-                  {badge.description}
-                </Body>
-
-                <Caption center color={earned ? colors.warning : colors.textFaint}>
-                  {earned ? "Earned" : "Locked"}
+                <Body style={styles.tileTitle}>{badge.name}</Body>
+                <Caption>
+                  {earned ? t("common.earned") : `${t("common.locked")} · ${badge.description}`}
                 </Caption>
-              </GlassCard>
-            </FadeIn>
-          );
-        })}
-      </View>
+              </View>
+            );
+          })}
+        </View>
+      </FadeIn>
+
+      <FadeIn delay={120}>
+        <Caption style={styles.footnote}>{t("achievements.footnote")}</Caption>
+      </FadeIn>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  summary: {
-    padding: spacing.xl,
-    marginBottom: spacing.xl,
+  hero: {
+    padding: spacing.xl - 4,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
-  summaryHeader: {
+  countRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.lg,
+    alignItems: "baseline",
+    gap: spacing.sm,
   },
-  summaryCopy: {
-    flex: 1,
+  countTotal: {
+    fontSize: 20,
   },
-  summaryTitle: {
-    marginTop: spacing.xs,
-  },
-  summaryChip: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.input,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.warning + "55",
-  },
-  summaryMeter: {
-    marginTop: spacing.lg,
-  },
+  // The 1px gap is the grid's own background showing through between tiles.
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
+    gap: 1,
+    borderWidth: 1,
   },
-  gridItem: {
-    flexGrow: 1,
-    flexBasis: "47%",
-  },
-  card: {
-    flex: 1,
-    alignItems: "center",
-    gap: spacing.sm,
+  tile: {
     padding: spacing.lg,
+    gap: spacing.sm,
+    minHeight: 128,
   },
-  cardLocked: {
-    opacity: 0.7,
-  },
-  badgeChip: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.pill,
+  mark: {
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    marginBottom: spacing.xs,
   },
-  description: {
-    marginBottom: spacing.xs,
+  tileTitle: {
+    fontWeight: "700",
+  },
+  footnote: {
+    marginTop: spacing.lg,
   },
 });

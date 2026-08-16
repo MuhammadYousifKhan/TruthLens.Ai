@@ -1,19 +1,30 @@
-import { StyleSheet } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { Body, FadeIn, GlassCard, Screen, Title } from "../components";
-import { colors, spacing } from "../theme/theme";
+import { StyleSheet, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
+import { Body, FadeIn, Overline, Screen, SecondaryButton, Title } from "../components";
+import { spacing } from "../theme/theme";
 
-export default function PlaceholderScreen({ name }: { name: string }) {
+/** Scaffolding. Nothing routes here in the shipped build. */
+export default function PlaceholderScreen({ name }: { name?: string }) {
+  const navigation = useNavigation();
+  const { t } = useLanguage();
+  const palette = usePalette();
+
   return (
     <Screen center>
       <FadeIn>
-        <GlassCard style={styles.card}>
-          <MaterialIcons name="construction" size={30} color={colors.textFaint} />
-          <Title center>{name}</Title>
-          <Body muted center>
-            Screen not built yet
-          </Body>
-        </GlassCard>
+        <View style={[styles.card, { borderColor: palette.lineStrong }]}>
+          <Overline>{t("placeholder.kicker")}</Overline>
+          <Title style={styles.title}>{name ?? t("placeholder.title")}</Title>
+          <Body muted>{t("placeholder.body")}</Body>
+        </View>
+
+        <SecondaryButton
+          label={t("placeholder.goBack")}
+          onPress={() => navigation.goBack()}
+          style={styles.action}
+        />
       </FadeIn>
     </Screen>
   );
@@ -21,8 +32,16 @@ export default function PlaceholderScreen({ name }: { name: string }) {
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: "center",
-    gap: spacing.md,
+    borderWidth: 2,
+    borderStyle: "dashed",
     padding: spacing.xl,
+    gap: spacing.sm + 2,
+  },
+  title: {
+    fontSize: 26,
+    lineHeight: 30,
+  },
+  action: {
+    marginTop: spacing.md + 2,
   },
 });

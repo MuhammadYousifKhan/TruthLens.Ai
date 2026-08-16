@@ -1,27 +1,29 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import { MaterialIcons } from "@expo/vector-icons";
 import { auth } from "../firebase/config";
 import { createUserDocument } from "../firebase/users";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
   BlurCard,
   Body,
   Caption,
+  Display,
   FadeIn,
-  GhostButton,
   GlassInput,
-  Heading,
   LanguageToggle,
+  Overline,
   PrimaryButton,
   Screen,
+  UnderlineLink,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { motion, spacing } from "../theme/theme";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,6 +52,7 @@ function friendlyAuthError(code: string, t: (key: string) => string): string {
 
 export default function LoginScreen() {
   const { t } = useLanguage();
+  const palette = usePalette();
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -105,36 +108,43 @@ export default function LoginScreen() {
     setSubmitError(null);
   }
 
-  // The first field is the only one that can hold a validation error at a
-  // time, so the message renders under whichever field failed.
+  // Only the first failing field can hold a validation error at a time.
   const nameError = fieldError === "name" ? t("login.nameRequired") : null;
   const emailError = fieldError === "email" ? t("login.emailInvalid") : null;
   const passwordError = fieldError === "password" ? t("login.passwordTooShort") : null;
 
   return (
-    <Screen scroll center avoidKeyboard>
-      <View style={styles.languageRow}>
-        <LanguageToggle />
-      </View>
-
+    <Screen scroll avoidKeyboard wash="bottomLeft">
       <FadeIn>
         <View style={styles.brandRow}>
-          <View style={styles.mark}>
-            <MaterialIcons name="center-focus-strong" size={26} color={colors.primary} />
+          <View style={styles.brand}>
+            <View style={[styles.mark, { borderColor: palette.accentBrand }]}>
+              <View style={[styles.markCore, { backgroundColor: palette.accentBrand }]} />
+            </View>
+            <Overline color={palette.textPrimary}>{t("login.brand")}</Overline>
           </View>
-          <Heading>{t("login.brand")}</Heading>
+          <LanguageToggle />
         </View>
-        <Body muted style={styles.lede}>
-          {isSignup ? t("login.ledeSignup") : t("login.ledeLogin")}
-        </Body>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger}>
+        <View style={styles.titleBlock}>
+          <Overline color={palette.accentBrand}>
+            {isSignup ? t("login.kickerSignup") : t("login.kickerLogin")}
+          </Overline>
+          <Display style={styles.title}>
+            {isSignup ? t("login.titleSignup") : t("login.titleLogin")}
+          </Display>
+        </View>
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 2}>
-        {/* One of the four hero surfaces that gets real backdrop blur. */}
+        {/* The one translucent surface on this screen. Fields inside it stay
+            opaque so the value you are typing never fights the backdrop. */}
         <BlurCard style={styles.card} tone="strong">
           {isSignup && (
             <GlassInput
-              icon="person-outline"
+              label={t("login.namePlaceholder")}
               placeholder={t("login.namePlaceholder")}
               value={name}
               onChangeText={setName}
@@ -147,7 +157,7 @@ export default function LoginScreen() {
           )}
 
           <GlassInput
-            icon="alternate-email"
+            label={t("login.emailPlaceholder")}
             placeholder={t("login.emailPlaceholder")}
             value={email}
             onChangeText={setEmail}
@@ -160,7 +170,7 @@ export default function LoginScreen() {
           />
 
           <GlassInput
-            icon="lock-outline"
+            label={t("login.passwordPlaceholder")}
             placeholder={t("login.passwordPlaceholder")}
             value={password}
             onChangeText={setPassword}
@@ -172,9 +182,14 @@ export default function LoginScreen() {
           />
 
           {submitError && (
-            <View style={styles.submitError}>
-              <MaterialIcons name="error-outline" size={16} color={colors.danger} />
-              <Caption color={colors.danger} style={styles.submitErrorText}>
+            <View
+              style={[
+                styles.submitError,
+                { backgroundColor: palette.statusAiSoft, borderLeftColor: palette.statusAi },
+              ]}
+            >
+              <MaterialIcons name="error-outline" size={16} color={palette.statusAi} />
+              <Caption color={palette.accentBrandText} style={styles.submitErrorText}>
                 {submitError}
               </Caption>
             </View>
@@ -186,49 +201,56 @@ export default function LoginScreen() {
             loading={loading}
             icon="arrow-forward"
             iconTrailing
-            style={styles.submit}
-          />
-
-          <GhostButton
-            label={isSignup ? t("login.toggleToLogin") : t("login.toggleToSignup")}
-            onPress={toggleMode}
-            disabled={loading}
           />
         </BlurCard>
+      </FadeIn>
+
+      <FadeIn delay={motion.stagger * 3}>
+        <View style={styles.switchRow}>
+          <Body muted>{isSignup ? t("login.haveAccount") : t("login.newHere")}</Body>
+          <UnderlineLink
+            label={isSignup ? t("login.linkLogin") : t("login.linkSignup")}
+            onPress={loading ? undefined : toggleMode}
+          />
+        </View>
       </FadeIn>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  languageRow: {
-    alignItems: "center",
-    marginBottom: spacing.lg,
-  },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     gap: spacing.md,
   },
+  brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm + 2,
+  },
   mark: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
+    width: 26,
+    height: 26,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
   },
-  lede: {
-    textAlign: "center",
-    marginTop: spacing.md,
-    marginBottom: spacing.xxl,
-    paddingHorizontal: spacing.lg,
+  markCore: {
+    width: 8,
+    height: 8,
+  },
+  titleBlock: {
+    marginTop: spacing.xxl + spacing.lg,
+    marginBottom: spacing.xl,
+    gap: spacing.sm + 2,
+  },
+  title: {
+    maxWidth: 320,
   },
   card: {
-    padding: spacing.xl,
+    padding: spacing.xl - 2,
   },
   field: {
     marginBottom: spacing.lg,
@@ -237,15 +259,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radius.input,
+    borderLeftWidth: 2,
     padding: spacing.md,
     marginBottom: spacing.lg,
   },
   submitErrorText: {
     flex: 1,
   },
-  submit: {
-    marginBottom: spacing.sm,
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.xl,
   },
 });

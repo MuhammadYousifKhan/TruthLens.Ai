@@ -11,55 +11,58 @@ import { useVerificationActions } from "../hooks/useVerificationActions";
 import { lessons } from "../data/lessons";
 import { badges } from "../data/badges";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
+  AppearanceToggle,
   BlurCard,
   Body,
-  BodyStrong,
   Caption,
-  Display,
   FadeIn,
-  GlassCard,
-  Heading,
   LanguageToggle,
+  Overline,
   PrimaryButton,
   Screen,
   SecondaryButton,
-  SectionLabel,
+  Subtitle,
   Title,
 } from "../components";
-import { colors, motion, radius, spacing } from "../theme/theme";
+import { motion, spacing } from "../theme/theme";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Profile">;
 
 export default function ProfileScreen({ navigation }: Props) {
   const { t } = useLanguage();
+  const palette = usePalette();
   const { profile, loading } = useUserProfile();
   const { results } = useQuizResults();
   const { earnedIds } = useBadges();
   const { count: verificationCount } = useVerificationActions();
 
   const completedLessons = lessons.filter((lesson) => results[lesson.id]);
-
-  function handleLogOut() {
-    signOut(auth);
-  }
+  const earnedCount = badges.filter((badge) => earnedIds.has(badge.id)).length;
 
   if (loading || !profile) {
     return (
       <Screen center>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={palette.accentBrand} />
       </Screen>
     );
   }
 
-  const initial = profile.name?.trim()?.[0]?.toUpperCase() ?? "?";
+  const initials =
+    profile.name
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? "")
+      .join("") || "?";
 
   return (
     <Screen scroll>
       <FadeIn>
         <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Heading color={colors.primary}>{initial}</Heading>
+          <View style={[styles.avatar, { borderColor: palette.lineStrong }]}>
+            <Title>{initials}</Title>
           </View>
           <View style={styles.headerCopy}>
             <Title>{profile.name}</Title>
@@ -69,118 +72,112 @@ export default function ProfileScreen({ navigation }: Props) {
       </FadeIn>
 
       <FadeIn delay={motion.stagger}>
-        <SectionLabel>{t("language.sectionLabel")}</SectionLabel>
-        <View style={styles.languageRow}>
-          <LanguageToggle />
+        <View style={styles.stats}>
+          <BlurCard style={styles.stat} tone="strong">
+            <Title style={styles.statValue}>{profile.xp.toLocaleString()}</Title>
+            <Overline>{t("profile.totalXp")}</Overline>
+          </BlurCard>
+          <BlurCard style={styles.stat} tone="strong">
+            <Title style={styles.statValue}>
+              {completedLessons.length}/{lessons.length}
+            </Title>
+            <Overline>{t("profile.lessonsLabel")}</Overline>
+          </BlurCard>
         </View>
       </FadeIn>
 
+      {/* The one stat the app actually cares about, so it gets a sentence
+          rather than a bare number. */}
       <FadeIn delay={motion.stagger * 2}>
-        <View style={styles.statsRow}>
-          <BlurCard style={styles.statCard} tone="strong">
-            <Display color={colors.primary}>{profile.xp}</Display>
-            <Caption center>Total XP</Caption>
-          </BlurCard>
-          <BlurCard style={styles.statCard} tone="strong">
-            <Display color={colors.secondary}>
-              {completedLessons.length}/{lessons.length}
-            </Display>
-            <Caption center>Lessons done</Caption>
-          </BlurCard>
+        <View style={[styles.habits, { borderColor: palette.lineHairline }]}>
+          <Overline>{t("profile.verificationHabits")}</Overline>
+          <Subtitle style={styles.habitsText}>
+            {verificationCount === 0
+              ? t("profile.habitsEmpty")
+              : t("profile.habitsCount", { n: verificationCount })}
+          </Subtitle>
         </View>
       </FadeIn>
 
       <FadeIn delay={motion.stagger * 3}>
-        <SectionLabel>Verification habits</SectionLabel>
-        {/* The one stat the app actually cares about, so it gets its own
-            surface and a sentence rather than a bare number. */}
-        <GlassCard
-          style={styles.habitsCard}
-          accent={verificationCount > 0 ? colors.success : undefined}
-        >
-          <MaterialIcons
-            name={verificationCount > 0 ? "verified-user" : "lightbulb-outline"}
-            size={22}
-            color={verificationCount > 0 ? colors.success : colors.warning}
-          />
-          <Body style={styles.habitsText}>
-            {verificationCount === 0
-              ? "You haven't verified before sharing yet — try the Pause screen next time you scan something."
-              : `You've verified before sharing ${verificationCount} time${
-                  verificationCount === 1 ? "" : "s"
-                }. Keep it up.`}
-          </Body>
-        </GlassCard>
-      </FadeIn>
-
-      <FadeIn delay={motion.stagger * 4}>
-        <SectionLabel>Quiz scores</SectionLabel>
-        <GlassCard style={styles.card}>
-          {completedLessons.length === 0 ? (
-            <Body muted style={styles.emptyText}>
-              No quizzes completed yet.
-            </Body>
-          ) : (
-            completedLessons.map((lesson, index) => {
-              const result = results[lesson.id];
-              return (
-                <View
-                  key={lesson.id}
-                  style={[
-                    styles.quizRow,
-                    index < completedLessons.length - 1 && styles.divider,
-                  ]}
-                >
-                  <Body style={styles.quizTitle}>{lesson.title}</Body>
-                  <BodyStrong color={colors.primary}>
-                    {result.score}/{result.total}
-                  </BodyStrong>
-                </View>
-              );
-            })
-          )}
-        </GlassCard>
-      </FadeIn>
-
-      <FadeIn delay={motion.stagger * 5}>
-        <SectionLabel>Badges</SectionLabel>
-        <View style={styles.badgesStrip}>
-          {badges.map((badge) => {
-            const earned = earnedIds.has(badge.id);
-            return (
-              <View
-                key={badge.id}
-                style={[styles.badgeItem, !earned && styles.badgeLocked]}
-                accessibilityLabel={`${badge.name}. ${earned ? "Earned" : "Locked"}`}
-              >
-                <MaterialIcons
-                  name={earned ? "military-tech" : "lock-outline"}
-                  size={26}
-                  color={earned ? colors.warning : colors.textFaint}
-                />
-                <Caption center color={earned ? colors.text : colors.textFaint}>
-                  {badge.name}
-                </Caption>
-              </View>
-            );
-          })}
+        <View style={styles.settings}>
+          <View style={[styles.settingRow, { borderTopColor: palette.lineHairline }]}>
+            <Overline style={styles.settingLabel}>{t("headerMenu.language")}</Overline>
+            <LanguageToggle />
+          </View>
+          <View style={[styles.settingRow, { borderTopColor: palette.lineHairline }]}>
+            <Overline style={styles.settingLabel}>{t("headerMenu.appearance")}</Overline>
+            <AppearanceToggle />
+          </View>
         </View>
       </FadeIn>
 
+      <FadeIn delay={motion.stagger * 4}>
+        <View style={[styles.badgeBlock, { borderTopColor: palette.lineHairline }]}>
+          <Overline style={styles.badgeHeading}>
+            {t("profile.badgesLabel", { done: earnedCount, total: badges.length })}
+          </Overline>
+          <View style={styles.badgeStrip}>
+            {badges.map((badge) => {
+              const earned = earnedIds.has(badge.id);
+              return (
+                <View
+                  key={badge.id}
+                  accessibilityLabel={`${badge.name}. ${
+                    earned ? t("common.earned") : t("common.locked")
+                  }`}
+                  style={[
+                    styles.badge,
+                    earned
+                      ? { backgroundColor: palette.statusUncertain, borderColor: palette.statusUncertain }
+                      : { borderColor: palette.lineHairline, borderStyle: "dashed" },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={earned ? "military-tech" : "lock-outline"}
+                    size={18}
+                    color={earned ? palette.statusUncertainOn : palette.textTertiary}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      </FadeIn>
+
+      {completedLessons.length > 0 && (
+        <FadeIn delay={motion.stagger * 5}>
+          <View style={[styles.quizBlock, { borderTopColor: palette.lineHairline }]}>
+            <Overline style={styles.badgeHeading}>{t("profile.quizScores")}</Overline>
+            {completedLessons.map((lesson) => (
+              <View
+                key={lesson.id}
+                style={[styles.quizRow, { borderBottomColor: palette.lineHairline }]}
+              >
+                <Body style={styles.quizTitle}>{lesson.title}</Body>
+                <Caption color={palette.textPrimary}>
+                  {results[lesson.id].score}/{results[lesson.id].total}
+                </Caption>
+              </View>
+            ))}
+          </View>
+        </FadeIn>
+      )}
+
       <FadeIn delay={motion.stagger * 6} style={styles.actions}>
         <PrimaryButton
-          label="Share my MIL habits"
+          label={t("profile.shareHabits")}
           onPress={() => navigation.navigate("ReportCard")}
-          icon="ios-share"
+          icon="arrow-forward"
+          iconTrailing
           style={styles.action}
         />
-        {/* Destructive, so it is outlined in the danger tone rather than
-            filled — it must be findable but never the easiest thing to hit. */}
+        {/* Destructive, so it is outlined in the accent rather than filled —
+            it must be findable but never the easiest thing to hit. */}
         <SecondaryButton
-          label="Log out"
-          onPress={handleLogOut}
-          icon="logout"
-          tone={colors.danger}
+          label={t("profile.logOut")}
+          onPress={() => signOut(auth)}
+          tone={palette.accentBrandText}
         />
       </FadeIn>
     </Screen>
@@ -191,94 +188,98 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  languageRow: {
-    marginBottom: spacing.xl,
+    gap: spacing.md + 2,
+    marginBottom: spacing.lg,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.pill,
+    width: 56,
+    height: 56,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.primary + "55",
   },
   headerCopy: {
     flex: 1,
-    gap: spacing.xs,
+    gap: 2,
   },
-  statsRow: {
+  stats: {
     flexDirection: "row",
-    gap: spacing.md,
-    marginBottom: spacing.xl,
+    gap: spacing.sm + 2,
+    marginBottom: spacing.lg,
   },
-  statCard: {
+  stat: {
     flex: 1,
-    alignItems: "center",
+    padding: spacing.md + 2,
     gap: spacing.xs,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.md,
   },
-  habitsCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.md,
+  statValue: {
+    fontSize: 32,
+  },
+  habits: {
+    borderWidth: 1,
     padding: spacing.lg,
-    marginBottom: spacing.xl,
+    gap: spacing.xs + 2,
+    marginBottom: spacing.lg,
   },
   habitsText: {
+    marginTop: 2,
+  },
+  settings: {
+    marginBottom: spacing.lg,
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    borderTopWidth: 1,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  settingLabel: {
     flex: 1,
-    lineHeight: 21,
   },
-  card: {
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
+  badgeBlock: {
+    borderTopWidth: 1,
+    paddingTop: spacing.md + 2,
+    marginBottom: spacing.lg,
   },
-  emptyText: {
-    paddingVertical: spacing.lg,
+  badgeHeading: {
+    marginBottom: spacing.md,
+  },
+  badgeStrip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  badge: {
+    width: 42,
+    height: 42,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quizBlock: {
+    borderTopWidth: 1,
+    paddingTop: spacing.md + 2,
+    marginBottom: spacing.lg,
   },
   quizRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
-    paddingVertical: spacing.lg,
-  },
-  divider: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.glassBorder,
+    paddingVertical: spacing.md,
   },
   quizTitle: {
     flex: 1,
   },
-  badgesStrip: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  badgeItem: {
-    width: 88,
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.card,
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-  },
-  badgeLocked: {
-    opacity: 0.55,
-  },
   actions: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
+    gap: spacing.sm + 2,
   },
   action: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
 });

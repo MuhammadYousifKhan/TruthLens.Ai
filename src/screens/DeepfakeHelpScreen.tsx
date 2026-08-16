@@ -3,150 +3,134 @@ import * as WebBrowser from "expo-web-browser";
 import { MaterialIcons } from "@expo/vector-icons";
 import { deepfakeResponseSteps } from "../data/deepfakeResponseSteps";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePalette } from "../theme/ThemeContext";
 import {
-  Body,
-  BodyStrong,
   Caption,
   FadeIn,
-  GlassCard,
+  Heading,
+  Overline,
+  Pill,
   PressScale,
+  Rule,
   Screen,
   Subtitle,
+  Title,
 } from "../components";
-import { colors, motion, radius, spacing, touchTarget } from "../theme/theme";
+import { motion, spacing, touchTarget } from "../theme/theme";
 
 /**
  * First-response steps for someone who has found a deepfake of a person they
  * know.
  *
- * Whoever opens this screen is likely distressed, so the design is calmer than
- * the rest of the app: no glow, no accent fills, one clear numbered sequence.
- * Red is used only on the framing chip, never on the steps themselves —
- * alarming someone who is already alarmed does not help them act.
+ * The calmest screen in the app, by some distance. No grid, no wash, no accent
+ * fill: plain ground, ink type, one outlined chip. Whoever opens this is
+ * distressed, and alarming someone who is already alarmed does not help them
+ * act. The seriousness comes from the 2px rule under the intro and a reading
+ * measure set wider than anywhere else.
  */
 export default function DeepfakeHelpScreen() {
   const { t } = useLanguage();
+  const palette = usePalette();
+
   return (
-    <Screen scroll>
+    <Screen scroll grid={false}>
       <FadeIn>
-        <View style={styles.introRow}>
-          <View style={styles.introChip}>
-            <MaterialIcons name="shield" size={24} color={colors.danger} />
-          </View>
-          <Subtitle style={styles.introText}>{t("deepfakeHelp.intro")}</Subtitle>
-        </View>
-        <Caption style={styles.reassurance}>{t("deepfakeHelp.reassurance")}</Caption>
+        <Pill label={t("nav.deepfakeHelp")} tone={palette.statusAi} style={styles.chip} />
+        <Heading style={styles.title}>{t("deepfakeHelp.intro")}</Heading>
+        <Subtitle color={palette.textPrimary} style={styles.reassurance}>
+          {t("deepfakeHelp.reassurance")}
+        </Subtitle>
+        <Rule strong style={styles.rule} />
       </FadeIn>
 
-      {deepfakeResponseSteps.map((step, index) => (
-        <FadeIn key={step.title} delay={motion.stagger * (1 + index)}>
-          <GlassCard style={styles.card}>
-            <View style={styles.stepHeader}>
-              <View style={styles.stepBadge}>
-                <BodyStrong color={colors.primary}>{index + 1}</BodyStrong>
+      <View>
+        {deepfakeResponseSteps.map((step, index) => (
+          <FadeIn key={step.title} delay={motion.stagger * (1 + index)}>
+            <View style={[styles.step, { borderBottomColor: palette.lineHairline }]}>
+              <Overline color={palette.textTertiary} style={styles.stepNumber}>
+                {String(index + 1).padStart(2, "0")}
+              </Overline>
+
+              <View style={styles.stepCopy}>
+                <Title style={styles.stepTitle}>{t(`deepfakeHelp.steps.${index}.title`)}</Title>
+                <Caption>{t(`deepfakeHelp.steps.${index}.body`)}</Caption>
+
+                {step.actions && (
+                  <View style={styles.actionRow}>
+                    {step.actions.map((action) => (
+                      <PressScale
+                        key={action.label}
+                        onPress={() => WebBrowser.openBrowserAsync(action.url)}
+                        accessibilityRole="link"
+                        accessibilityLabel={action.label}
+                        accessibilityHint="Opens in your browser"
+                        style={[styles.actionButton, { borderColor: palette.lineStrong }]}
+                      >
+                        <Overline color={palette.textPrimary}>{action.label}</Overline>
+                        <MaterialIcons
+                          name="open-in-new"
+                          size={13}
+                          color={palette.textPrimary}
+                        />
+                      </PressScale>
+                    ))}
+                  </View>
+                )}
               </View>
-              <BodyStrong style={styles.stepTitle}>
-                {t(`deepfakeHelp.steps.${index}.title`)}
-              </BodyStrong>
             </View>
-
-            <Body muted style={styles.stepBody}>
-              {t(`deepfakeHelp.steps.${index}.body`)}
-            </Body>
-
-            {step.actions && (
-              <View style={styles.actionRow}>
-                {step.actions.map((action) => (
-                  <PressScale
-                    key={action.label}
-                    onPress={() => WebBrowser.openBrowserAsync(action.url)}
-                    accessibilityRole="link"
-                    accessibilityLabel={action.label}
-                    accessibilityHint="Opens in your browser"
-                    style={styles.actionButton}
-                  >
-                    <MaterialIcons name="open-in-new" size={16} color={colors.primary} />
-                    <Caption color={colors.primary} style={styles.actionLabel}>
-                      {action.label}
-                    </Caption>
-                  </PressScale>
-                ))}
-              </View>
-            )}
-          </GlassCard>
-        </FadeIn>
-      ))}
+          </FadeIn>
+        ))}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  introRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.md,
+  chip: {
+    marginTop: spacing.md,
   },
-  introChip: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.danger + "55",
-  },
-  introText: {
-    flex: 1,
+  title: {
+    marginTop: spacing.lg,
   },
   reassurance: {
-    marginBottom: spacing.xl,
+    marginTop: spacing.md,
+    // The one place in the app set for reading rather than scanning, at a
+    // deliberately generous measure.
+    maxWidth: 360,
+    lineHeight: 26,
   },
-  card: {
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
+  rule: {
+    marginTop: spacing.xl,
   },
-  stepHeader: {
+  step: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.sm,
+    gap: spacing.md + 2,
+    borderBottomWidth: 1,
+    paddingVertical: spacing.lg,
   },
-  stepBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.glassBorderStrong,
+  stepNumber: {
+    width: 22,
+    marginTop: 5,
+  },
+  stepCopy: {
+    flex: 1,
+    gap: spacing.xs,
   },
   stepTitle: {
-    flex: 1,
-  },
-  stepBody: {
-    lineHeight: 21,
+    fontSize: 18,
   },
   actionRow: {
-    marginTop: spacing.lg,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
     minHeight: touchTarget.minHeight,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: colors.primary + "66",
-    backgroundColor: colors.glass,
-  },
-  actionLabel: {
-    fontWeight: "600",
   },
 });
